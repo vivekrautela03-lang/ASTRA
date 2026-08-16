@@ -164,8 +164,8 @@ export const AstraDesktopInterface: React.FC<AstraDesktopInterfaceProps> = ({
         {/* TOP FLOATING BAR */}
         <div className="w-full flex items-center justify-between gap-4 shrink-0">
           
-          {/* Top Left Hamburger Button & Logo */}
-          <div className="flex items-center gap-3">
+          {/* Top Left Floating Hamburger Button */}
+          <div className="flex items-center">
             <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
               className="p-2.5 rounded-2xl bg-[#0e0a1f]/85 hover:bg-[#1a123a] border border-white/15 backdrop-blur-3xl text-amber-300 transition-all active:scale-95 shadow-lg shadow-amber-500/10"
@@ -173,16 +173,6 @@ export const AstraDesktopInterface: React.FC<AstraDesktopInterfaceProps> = ({
             >
               {isSidebarOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
             </button>
-
-            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 via-yellow-400 to-amber-600 p-0.5 shadow-md shadow-amber-500/20">
-              <div className="w-full h-full rounded-[10px] bg-[#0d0926] flex items-center justify-center">
-                <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
-              </div>
-            </div>
-            <div>
-              <h1 className="text-xs font-bold tracking-[0.3em] text-white uppercase">ASTRA</h1>
-              <p className="text-[8px] font-mono tracking-widest text-amber-200/80 uppercase">AI PERSONAL ASSISTANT</p>
-            </div>
           </div>
 
           {/* Top Center Command Input Bar */}
