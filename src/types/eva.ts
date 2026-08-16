@@ -1,11 +1,13 @@
 export type EvaState = 
   | 'entrance' 
   | 'idle' 
+  | 'listening'
   | 'thinking' 
   | 'speaking' 
   | 'executing' 
   | 'observing' 
-  | 'analyzing';
+  | 'analyzing'
+  | 'error';
 
 export type AIModelId = 
   | 'claude-3-5-sonnet' 

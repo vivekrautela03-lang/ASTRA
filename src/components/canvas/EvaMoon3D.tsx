@@ -9,15 +9,14 @@ interface EvaMoon3DProps {
   entranceProgress?: number;
 }
 
-// 1. Apple Intelligence Siri Liquid Morphing Vertex Shader
-const AppleSiriOrbVertexShader = `
+// 1. Golden Mechanical Orb Vertex Shader
+const GoldenOrbVertexShader = `
   varying vec3 vNormal;
   varying vec3 vViewPosition;
   varying vec3 vWorldPosition;
   uniform float uTime;
   uniform float uDistortion;
 
-  // Simplex-style 3D Perlin Noise for Liquid Morphing
   vec4 permute(vec4 x){return mod(((x*34.0)+1.0)*x, 289.0);}
   vec4 taylorInvSqrt(vec4 r){return 1.79284291400159 - 0.85373472095314 * r;}
 
@@ -66,8 +65,6 @@ const AppleSiriOrbVertexShader = `
 
   void main() {
     vNormal = normalize(normalMatrix * normal);
-    
-    // Liquid morph displacement offset
     float noise = snoise(position * 1.5 + vec3(uTime * 0.8));
     vec3 newPos = position + normal * noise * uDistortion;
 
@@ -79,39 +76,36 @@ const AppleSiriOrbVertexShader = `
   }
 `;
 
-// 2. Apple Intelligence Iridescent Siri Colors Fragment Shader
-const AppleSiriOrbFragmentShader = `
+// 2. Golden Mechanical Metallic Fragment Shader
+const GoldenOrbFragmentShader = `
   varying vec3 vNormal;
   varying vec3 vViewPosition;
   varying vec3 vWorldPosition;
   uniform float uTime;
   uniform float uIntensity;
-  uniform vec3 uColorBlue;
-  uniform vec3 uColorPurple;
-  uniform vec3 uColorMagenta;
-  uniform vec3 uColorCyan;
+  uniform vec3 uColorGold;
+  uniform vec3 uColorBronze;
+  uniform vec3 uColorAmber;
+  uniform vec3 uColorGlow;
 
   void main() {
     vec3 normal = normalize(vNormal);
     vec3 viewDir = normalize(vViewPosition);
 
-    // Fresnel Glass Rim Light
     float fresnel = pow(1.0 - max(0.0, dot(normal, viewDir)), 2.5);
 
-    // Organic Siri Fluid RGB Color Swirl
     float swirl1 = sin(vWorldPosition.x * 2.5 + uTime * 1.8) * cos(vWorldPosition.y * 2.5 + uTime * 1.4);
     float swirl2 = cos(vWorldPosition.z * 3.0 + uTime * 2.0);
 
-    vec3 liquidColor = mix(uColorBlue, uColorPurple, 0.5 + 0.5 * swirl1);
-    liquidColor = mix(liquidColor, uColorMagenta, 0.5 + 0.5 * swirl2);
-    liquidColor = mix(liquidColor, uColorCyan, fresnel);
+    vec3 goldenColor = mix(uColorGold, uColorBronze, 0.5 + 0.5 * swirl1);
+    goldenColor = mix(goldenColor, uColorAmber, 0.5 + 0.5 * swirl2);
+    goldenColor = mix(goldenColor, uColorGlow, fresnel);
 
-    // Inner Glass Glow Specular Sparkle
     vec3 lightDir = normalize(vec3(1.0, 1.5, 2.0));
     float spec = pow(max(0.0, dot(reflect(-lightDir, normal), viewDir)), 16.0);
-    vec3 finalColor = liquidColor + vec3(spec * 0.4);
+    vec3 finalColor = goldenColor + vec3(spec * 0.5);
 
-    gl_FragColor = vec4(finalColor, min(1.0, fresnel * 1.2 + 0.75) * uIntensity);
+    gl_FragColor = vec4(finalColor, min(1.0, fresnel * 1.2 + 0.78) * uIntensity);
   }
 `;
 
@@ -121,144 +115,144 @@ export const EvaMoon3D: React.FC<EvaMoon3DProps> = ({
   entranceProgress = 1.0,
 }) => {
   const orbGroupRef = useRef<THREE.Group>(null!);
-  const siriOrbMeshRef = useRef<THREE.Mesh>(null!);
-  const siriMaterialRef = useRef<THREE.ShaderMaterial>(null!);
+  const goldenOrbMeshRef = useRef<THREE.Mesh>(null!);
+  const goldenMaterialRef = useRef<THREE.ShaderMaterial>(null!);
 
-  const auraRing1Ref = useRef<THREE.Mesh>(null!);
-  const auraRing2Ref = useRef<THREE.Mesh>(null!);
-  const auraRing3Ref = useRef<THREE.Mesh>(null!);
+  const mechanicalRing1Ref = useRef<THREE.Mesh>(null!);
+  const mechanicalRing2Ref = useRef<THREE.Mesh>(null!);
+  const mechanicalRing3Ref = useRef<THREE.Mesh>(null!);
 
-  // Apple Siri Iridescent Color Palette per State
   const stateConfig = useMemo(() => {
     switch (state) {
       case 'listening':
         return {
           distortion: 0.18,
-          intensity: 1.0,
-          colorBlue: new THREE.Color('#3b82f6'),
-          colorPurple: new THREE.Color('#a855f7'),
-          colorMagenta: new THREE.Color('#f43f5e'),
-          colorCyan: new THREE.Color('#38bdf8')
+          intensity: 1.1,
+          rotSpeed: 0.8,
+          colorGold: new THREE.Color('#f59e0b'),
+          colorBronze: new THREE.Color('#d97706'),
+          colorAmber: new THREE.Color('#fbbf24'),
+          colorGlow: new THREE.Color('#38bdf8')
         };
       case 'thinking':
         return {
           distortion: 0.28,
           intensity: 1.25,
-          colorBlue: new THREE.Color('#8b5cf6'),
-          colorPurple: new THREE.Color('#ec4899'),
-          colorMagenta: new THREE.Color('#f43f5e'),
-          colorCyan: new THREE.Color('#06b6d4')
+          rotSpeed: 1.5,
+          colorGold: new THREE.Color('#fbbf24'),
+          colorBronze: new THREE.Color('#b45309'),
+          colorAmber: new THREE.Color('#fef08a'),
+          colorGlow: new THREE.Color('#a855f7')
         };
       case 'speaking':
         return {
           distortion: 0.22,
-          intensity: 1.15,
-          colorBlue: new THREE.Color('#06b6d4'),
-          colorPurple: new THREE.Color('#3b82f6'),
-          colorMagenta: new THREE.Color('#c084fc'),
-          colorCyan: new THREE.Color('#60a5fa')
+          intensity: 1.2,
+          rotSpeed: 1.1,
+          colorGold: new THREE.Color('#f59e0b'),
+          colorBronze: new THREE.Color('#d97706'),
+          colorAmber: new THREE.Color('#fef08a'),
+          colorGlow: new THREE.Color('#fbbf24')
         };
       case 'idle':
       default:
         return {
           distortion: 0.10,
-          intensity: 0.85,
-          colorBlue: new THREE.Color('#3b82f6'),
-          colorPurple: new THREE.Color('#8b5cf6'),
-          colorMagenta: new THREE.Color('#ec4899'),
-          colorCyan: new THREE.Color('#38bdf8')
+          intensity: 0.9,
+          rotSpeed: 0.3,
+          colorGold: new THREE.Color('#d97706'),
+          colorBronze: new THREE.Color('#b45309'),
+          colorAmber: new THREE.Color('#f59e0b'),
+          colorGlow: new THREE.Color('#fbbf24')
         };
     }
   }, [state]);
 
-  // Render Loop
   useFrame((stateCtx, delta) => {
     const time = stateCtx.clock.getElapsedTime();
-    const { distortion, intensity, colorBlue, colorPurple, colorMagenta, colorCyan } = stateConfig;
+    const { distortion, intensity, rotSpeed, colorGold, colorBronze, colorAmber, colorGlow } = stateConfig;
 
-    // 1. APPLE SIRI ORB: Floating Physics & Scale Lerp
     if (orbGroupRef.current) {
       const floatY = Math.sin(time * 1.6) * 0.12;
       orbGroupRef.current.position.y = THREE.MathUtils.lerp(orbGroupRef.current.position.y, floatY, 0.05);
 
-      const audioPulse = state === 'speaking' ? 1.0 + audioLevel * 0.18 : 1.0;
+      const audioPulse = state === 'speaking' ? 1.0 + audioLevel * 0.22 : 1.0;
       const targetScale = entranceProgress * audioPulse;
       orbGroupRef.current.scale.lerp(new THREE.Vector3(targetScale, targetScale, targetScale), 0.1);
     }
 
-    if (siriOrbMeshRef.current) {
-      siriOrbMeshRef.current.rotation.y += 0.2 * delta;
-      siriOrbMeshRef.current.rotation.z += 0.1 * delta;
+    if (goldenOrbMeshRef.current) {
+      goldenOrbMeshRef.current.rotation.y += rotSpeed * delta;
+      goldenOrbMeshRef.current.rotation.z += (rotSpeed * 0.5) * delta;
     }
 
-    // Shader Uniform Updates
-    if (siriMaterialRef.current) {
-      siriMaterialRef.current.uniforms.uTime.value = time;
-      
-      const currentDistortion = siriMaterialRef.current.uniforms.uDistortion.value;
-      const targetDistortion = distortion + (state === 'speaking' ? audioLevel * 0.15 : 0);
-      siriMaterialRef.current.uniforms.uDistortion.value = THREE.MathUtils.lerp(currentDistortion, targetDistortion, 0.05);
-
-      const currentIntensity = siriMaterialRef.current.uniforms.uIntensity.value;
-      siriMaterialRef.current.uniforms.uIntensity.value = THREE.MathUtils.lerp(currentIntensity, intensity, 0.05);
-
-      siriMaterialRef.current.uniforms.uColorBlue.value.lerp(colorBlue, 0.05);
-      siriMaterialRef.current.uniforms.uColorPurple.value.lerp(colorPurple, 0.05);
-      siriMaterialRef.current.uniforms.uColorMagenta.value.lerp(colorMagenta, 0.05);
-      siriMaterialRef.current.uniforms.uColorCyan.value.lerp(colorCyan, 0.05);
+    // Mechanical Chakra Ring Rotations
+    if (mechanicalRing1Ref.current) {
+      mechanicalRing1Ref.current.rotation.z += (rotSpeed * 1.2) * delta;
+      mechanicalRing1Ref.current.rotation.x = Math.sin(time * 0.8) * 0.3;
+    }
+    if (mechanicalRing2Ref.current) {
+      mechanicalRing2Ref.current.rotation.z -= (rotSpeed * 0.9) * delta;
+      mechanicalRing2Ref.current.rotation.y = Math.cos(time * 0.8) * 0.3;
+    }
+    if (mechanicalRing3Ref.current) {
+      mechanicalRing3Ref.current.rotation.z += (rotSpeed * 1.5) * delta;
     }
 
-    // 2. SIRI EXPANDING LIQUID WAVE PULSES
-    const animatePulse = (mesh: THREE.Mesh | null, timeOffset: number) => {
-      if (!mesh) return;
-      const cycle = ((time + timeOffset) * 1.5) % 2.5;
-      const scaleProgress = 1.0 + (cycle / 2.5) * 1.6;
-      const alpha = Math.max(0, 1.0 - cycle / 2.5);
+    if (goldenMaterialRef.current) {
+      goldenMaterialRef.current.uniforms.uTime.value = time;
 
-      mesh.scale.set(scaleProgress, scaleProgress, scaleProgress);
-      (mesh.material as THREE.MeshBasicMaterial).opacity = alpha * 0.45;
-    };
+      const currentDistortion = goldenMaterialRef.current.uniforms.uDistortion.value;
+      const targetDistortion = distortion + (state === 'speaking' ? audioLevel * 0.18 : 0);
+      goldenMaterialRef.current.uniforms.uDistortion.value = THREE.MathUtils.lerp(currentDistortion, targetDistortion, 0.05);
 
-    animatePulse(auraRing1Ref.current, 0);
-    animatePulse(auraRing2Ref.current, 0.8);
-    animatePulse(auraRing3Ref.current, 1.6);
+      const currentIntensity = goldenMaterialRef.current.uniforms.uIntensity.value;
+      goldenMaterialRef.current.uniforms.uIntensity.value = THREE.MathUtils.lerp(currentIntensity, intensity, 0.05);
+
+      goldenMaterialRef.current.uniforms.uColorGold.value.lerp(colorGold, 0.05);
+      goldenMaterialRef.current.uniforms.uColorBronze.value.lerp(colorBronze, 0.05);
+      goldenMaterialRef.current.uniforms.uColorAmber.value.lerp(colorAmber, 0.05);
+      goldenMaterialRef.current.uniforms.uColorGlow.value.lerp(colorGlow, 0.05);
+    }
   });
 
   return (
     <group ref={orbGroupRef} position={[0, 0.1, 0]}>
-      {/* AUTHENTIC APPLE INTELLIGENCE 3D SIRI LIQUID GLASS ORB */}
-      <mesh ref={siriOrbMeshRef}>
+      {/* GOLDEN MECHANICAL ORB CORE */}
+      <mesh ref={goldenOrbMeshRef}>
         <icosahedronGeometry args={[1.75, 64]} />
         <shaderMaterial
-          ref={siriMaterialRef}
-          vertexShader={AppleSiriOrbVertexShader}
-          fragmentShader={AppleSiriOrbFragmentShader}
+          ref={goldenMaterialRef}
+          vertexShader={GoldenOrbVertexShader}
+          fragmentShader={GoldenOrbFragmentShader}
           uniforms={{
             uTime: { value: 0 },
             uDistortion: { value: 0.10 },
-            uIntensity: { value: 0.85 },
-            uColorBlue: { value: new THREE.Color('#3b82f6') },
-            uColorPurple: { value: new THREE.Color('#8b5cf6') },
-            uColorMagenta: { value: new THREE.Color('#ec4899') },
-            uColorCyan: { value: new THREE.Color('#38bdf8') }
+            uIntensity: { value: 0.9 },
+            uColorGold: { value: new THREE.Color('#d97706') },
+            uColorBronze: { value: new THREE.Color('#b45309') },
+            uColorAmber: { value: new THREE.Color('#f59e0b') },
+            uColorGlow: { value: new THREE.Color('#fbbf24') }
           }}
           transparent
           blending={THREE.AdditiveBlending}
         />
       </mesh>
 
-      {/* APPLE SIRI EXPANDING AURA PULSE RINGS */}
-      <mesh ref={auraRing1Ref} rotation={[Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[1.78, 1.82, 64]} />
-        <meshBasicMaterial color="#38bdf8" transparent opacity={0} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} />
+      {/* GOLDEN MECHANICAL CHAKRA RINGS */}
+      <mesh ref={mechanicalRing1Ref} rotation={[Math.PI / 3, 0, 0]}>
+        <torusGeometry args={[2.05, 0.02, 16, 100]} />
+        <meshBasicMaterial color="#fbbf24" transparent opacity={0.75} blending={THREE.AdditiveBlending} />
       </mesh>
-      <mesh ref={auraRing2Ref} rotation={[Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[1.78, 1.82, 64]} />
-        <meshBasicMaterial color="#c084fc" transparent opacity={0} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} />
+
+      <mesh ref={mechanicalRing2Ref} rotation={[-Math.PI / 4, 0, 0]}>
+        <torusGeometry args={[2.25, 0.015, 16, 100]} />
+        <meshBasicMaterial color="#f59e0b" transparent opacity={0.65} blending={THREE.AdditiveBlending} />
       </mesh>
-      <mesh ref={auraRing3Ref} rotation={[Math.PI / 2, 0, 0]}>
-        <ringGeometry args={[1.78, 1.82, 64]} />
-        <meshBasicMaterial color="#ec4899" transparent opacity={0} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} />
+
+      <mesh ref={mechanicalRing3Ref} rotation={[0, 0, Math.PI / 2]}>
+        <ringGeometry args={[2.4, 2.44, 64]} />
+        <meshBasicMaterial color="#d97706" transparent opacity={0.5} side={THREE.DoubleSide} blending={THREE.AdditiveBlending} />
       </mesh>
     </group>
   );

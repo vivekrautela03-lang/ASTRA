@@ -11,7 +11,7 @@ export class CalendarTimeService {
   /**
    * Get current live formatted time and date
    */
-  public getLiveTimeAndDate(): { time: string; date: string fontDate: string; day: string } {
+  public getLiveTimeAndDate(): { time: string; date: string; fontDate: string; day: string } {
     const now = new Date();
     const time = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     const fontDate = now.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });

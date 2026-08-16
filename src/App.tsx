@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { AstraDesignSystemUI } from './components/ui/AstraDesignSystemUI';
+import { AstraDesktopInterface } from './components/astra/AstraDesktopInterface';
 import { SettingsModal } from './components/ui/SettingsModal';
 import { OSDashboard } from './components/ui/OSDashboard';
 import { JarvisFloatingScreens } from './components/ui/JarvisFloatingScreens';
@@ -11,6 +11,10 @@ import { ProactiveAlertBanner } from './components/ui/ProactiveAlertBanner';
 import type { EvaState, SystemSettings, AIModelId, SystemTelemetryData, AIAgent, VisionDetection, OSAction } from './types/eva';
 import { aiEngine } from './services/aiEngine';
 import { voiceVisionEngine } from './services/voiceVisionEngine';
+import { textToSpeechService } from './services/speech/tts';
+import { wakeWordEngine } from './services/wakeWord/wakeWordEngine';
+import { toolRegistry } from './services/tools/toolRegistry';
+import { ASTRA_SYSTEM_PHRASES } from './config/astraPersonality';
 import { clapDetectionEngine } from './services/clapDetectionEngine';
 import { safetyGatekeeper, type SafetyActionRequest } from './services/safetyGatekeeper';
 import { proactiveMonitor, type ProactiveAlert } from './services/proactiveMonitorService';
@@ -66,7 +70,7 @@ export function App() {
     theme: 'jarvis-cyan'
   });
 
-  // Helper to re-arm continuous background mic listening (Declared FIRST)
+  // Helper to re-arm continuous background mic listening for turn-taking (Declared FIRST)
   const armContinuousMicListener = useCallback(() => {
     voiceVisionEngine.startListening((transcript, isFinal) => {
       if (!isFinal && transcript.trim()) {
@@ -76,11 +80,9 @@ export function App() {
         setLastResponseText(`Listening: "${transcript}"...`);
       } else if (isFinal && transcript.trim()) {
         if (isProcessingRef.current) {
-          // ASTRA is currently speaking or thinking: Queue the next question!
           promptQueueRef.current.push(transcript.trim());
           setLastResponseText(`Queued next question: "${transcript}"`);
         } else {
-          // Immediately process the user's question
           processPromptRef.current(transcript.trim());
         }
       }
@@ -97,7 +99,7 @@ export function App() {
   // Global User Interaction Audio & Mic Unlocker (Bypasses Browser Autoplay Restrictions)
   useEffect(() => {
     const handleFirstClick = () => {
-      voiceVisionEngine.speak(' ', 'bilingual');
+      textToSpeechService.speak(' ');
       armContinuousMicListener();
     };
     window.addEventListener('click', handleFirstClick);
@@ -119,27 +121,36 @@ export function App() {
     };
   }, []);
 
-  // Core Prompt Processor with Queue Drainage & Background Listening
+  // Core Prompt Processor with Tool Orchestration, Streaming & Queue Drainage
   const processPrompt = useCallback(async (promptText: string) => {
     isProcessingRef.current = true;
     const lower = promptText.toLowerCase().trim();
 
+    // Check for explicit "stop" voice interruption command
+    if (lower === 'stop' || lower === 'stop speaking' || lower === 'quiet' || lower === 'silence') {
+      textToSpeechService.stop();
+      isProcessingRef.current = false;
+      setState('idle');
+      setLastResponseText(ASTRA_SYSTEM_PHRASES.stopSpeaking);
+      armContinuousMicListener();
+      return;
+    }
+
     // Re-arm microphone in background while responding so next question can be queued
     armContinuousMicListener();
 
-    // Camera vision / object recognition directives
-    if (lower.includes('camera') || lower.includes('holding') || lower.includes('surroundings') || lower.includes('what am i holding') || lower.includes('check environment')) {
-      setIsCameraVisionOpen(true);
-      setState('thinking');
-      setLastResponseText("Opening camera vision feed and scanning surroundings for you, Vivek...");
-      
-      const analysis = await cameraVisionService.analyzeSurroundingsAndObject('Identify object in hand and surroundings');
-      const ackText = `Vivek, I am scanning your camera. You are holding a ${analysis.objectHeld}. ${analysis.surroundings.substring(0, 160)}`;
-      
-      setLastResponseText(ackText);
+    // 1. Evaluate Tool Registry for tool execution (Weather, Time, Special Day, Camera, Search)
+    const toolResult = await toolRegistry.evaluateAndExecute(promptText);
+
+    if (toolResult.executed && toolResult.resultSummary) {
+      if (toolResult.actionRequested === 'open_camera') {
+        setIsCameraVisionOpen(true);
+      }
+      setLastResponseText(toolResult.resultSummary);
       setState('speaking');
+
       if (settings.soundEnabled) {
-        voiceVisionEngine.speak(ackText, settings.voiceLanguage, () => {
+        textToSpeechService.speak(toolResult.resultSummary, () => {
           isProcessingRef.current = false;
           if (promptQueueRef.current.length > 0) {
             const nextPrompt = promptQueueRef.current.shift()!;
@@ -153,18 +164,44 @@ export function App() {
       return;
     }
 
-    // Universal App Opening directive handler
+    // 2. Camera vision / object recognition direct directives
+    if (lower.includes('camera') || lower.includes('holding') || lower.includes('surroundings') || lower.includes('what am i holding') || lower.includes('check environment')) {
+      setIsCameraVisionOpen(true);
+      setState('thinking');
+      setLastResponseText("Opening camera vision feed and scanning surroundings for you, Boss...");
+      
+      const analysis = await cameraVisionService.analyzeSurroundingsAndObject('Identify object in hand and surroundings');
+      const ackText = `Boss, I am scanning your camera. You are holding a ${analysis.objectHeld}. ${analysis.surroundings.substring(0, 160)}`;
+      
+      setLastResponseText(ackText);
+      setState('speaking');
+      if (settings.soundEnabled) {
+        textToSpeechService.speak(ackText, () => {
+          isProcessingRef.current = false;
+          if (promptQueueRef.current.length > 0) {
+            const nextPrompt = promptQueueRef.current.shift()!;
+            processPromptRef.current(nextPrompt);
+          } else {
+            setState('idle');
+            armContinuousMicListener();
+          }
+        });
+      }
+      return;
+    }
+
+    // 3. Universal App Opening directive handler
     if (lower.startsWith('open ') || lower.startsWith('launch ')) {
       const targetApp = lower.replace('open ', '').replace('launch ', '');
       const result = automationBridge.launchApplication(targetApp);
       
-      const ackText = `Opening ${result.title} for you now, Vivek.`;
+      const ackText = `Opening ${result.title} for you now, Boss.`;
       setLastResponseText(ackText);
       setState('speaking');
       memoryEngine.addMemory(`User: ${promptText} | ASTRA: Opened ${result.title}`, 'action', ['app-launcher']);
       
       if (settings.soundEnabled) {
-        voiceVisionEngine.speak(ackText, settings.voiceLanguage, () => {
+        textToSpeechService.speak(ackText, () => {
           isProcessingRef.current = false;
           if (promptQueueRef.current.length > 0) {
             const nextPrompt = promptQueueRef.current.shift()!;
@@ -178,9 +215,9 @@ export function App() {
       return;
     }
 
-    // 1. Visual processing status
+    // 4. Visual processing status
     setState('thinking');
-    setLastResponseText(`ASTRA processing: "${promptText}"...`);
+    setLastResponseText(`ASTRA thinking: "${promptText}"...`);
 
     const recommendation = aiEngine.selectOptimalModel(promptText);
     const chosenModel: AIModelId = settings.autoModelSelect ? recommendation.modelId : settings.selectedModel;
@@ -189,21 +226,21 @@ export function App() {
       setSettings(prev => ({ ...prev, selectedModel: chosenModel }));
     }
 
-    // 2. Generate response from Live Multi-API Engine
-    const res = await aiEngine.generateResponse(promptText, chosenModel);
+    // 5. Generate response from Live Multi-API Engine with progressive streaming text
+    const res = await aiEngine.generateResponse(promptText, chosenModel, (chunk) => {
+      setLastResponseText(chunk);
+    });
     
-    // Save conversation interaction persistently into local memory vault
     memoryEngine.addMemory(`User: ${promptText} | ASTRA: ${res.text.substring(0, 150)}...`, 'conversation', ['q-and-a']);
 
-    // 3. Speak response out loud & drain prompt queue for next question
+    // 6. Speak response out loud & drain prompt queue for next question
     setLastResponseText(res.text);
     setState('speaking');
 
     if (settings.soundEnabled) {
-      voiceVisionEngine.speak(res.text, settings.voiceLanguage, () => {
+      textToSpeechService.speak(res.text, () => {
         isProcessingRef.current = false;
 
-        // Drain Next Queued Question if user spoke while ASTRA was responding!
         if (promptQueueRef.current.length > 0) {
           const nextPrompt = promptQueueRef.current.shift()!;
           processPromptRef.current(nextPrompt);
@@ -224,7 +261,7 @@ export function App() {
         }
       }, 3500);
     }
-  }, [settings.autoModelSelect, settings.selectedModel, settings.voiceLanguage, settings.soundEnabled, armContinuousMicListener]);
+  }, [settings.autoModelSelect, settings.selectedModel, settings.soundEnabled, armContinuousMicListener]);
 
   // Sync processPromptRef
   useEffect(() => {
@@ -240,12 +277,12 @@ export function App() {
     setState('speaking');
     isProcessingRef.current = true;
 
-    voiceVisionEngine.speak(greeting, settings.voiceLanguage, () => {
+    textToSpeechService.speak(greeting, () => {
       isProcessingRef.current = false;
       setState('idle');
       armContinuousMicListener();
     });
-  }, [hasGreeted, settings.voiceLanguage, armContinuousMicListener]);
+  }, [hasGreeted, armContinuousMicListener]);
 
   useEffect(() => {
     if (!hasGreeted) {
@@ -307,26 +344,32 @@ export function App() {
     };
   }, [state, settings.micSensitivity, armContinuousMicListener]);
 
-  // Wake-word Listener Effect ("Hey ASTRA" / "ASTRA" / "FRIDAY" / "Computer")
+  // Wake-word Listener Effect ("Hey ASTRA" -> Wakes -> Speaks "Yes, Boss. I'm listening." -> Arm Mic)
   useEffect(() => {
     if (settings.wakeWordEnabled && state === 'idle') {
-      voiceVisionEngine.startWakeWordListener(() => {
-        setState('listening');
-        armContinuousMicListener();
+      wakeWordEngine.startListening(() => {
+        wakeWordEngine.stopListening();
+        setState('speaking');
+        setLastResponseText(ASTRA_SYSTEM_PHRASES.wakeAck);
+        
+        textToSpeechService.speak(ASTRA_SYSTEM_PHRASES.wakeAck, () => {
+          setState('listening');
+          armContinuousMicListener();
+        });
       });
     } else {
-      voiceVisionEngine.stopWakeWordListener();
+      wakeWordEngine.stopListening();
     }
 
     return () => {
-      voiceVisionEngine.stopWakeWordListener();
+      wakeWordEngine.stopListening();
     };
   }, [state, settings.wakeWordEnabled, armContinuousMicListener]);
 
   // Handle Voice Toggle (Mic Button)
   const handleToggleVoice = useCallback(() => {
     if (state === 'speaking') {
-      voiceVisionEngine.stopSpeaking();
+      textToSpeechService.stop();
       setState('idle');
       armContinuousMicListener();
     } else if (state === 'idle' || state === 'listening') {
@@ -335,19 +378,28 @@ export function App() {
     }
   }, [state, armContinuousMicListener]);
 
+  const handleStopSpeaking = useCallback(() => {
+    textToSpeechService.stop();
+    setState('idle');
+    armContinuousMicListener();
+  }, [armContinuousMicListener]);
+
   const handleUpdateSettings = (newSettings: Partial<SystemSettings>) => {
     setSettings((prev) => ({ ...prev, ...newSettings }));
   };
 
   return (
-    <div className="relative w-full min-h-screen bg-[#0a071b]">
-      {/* Primary Master ASTRA 12-Screen Design Suite */}
-      <AstraDesignSystemUI
+    <div className="relative w-full min-h-screen bg-[#080518]">
+      {/* Main Transparent Glass Desktop Interface */}
+      <AstraDesktopInterface
         state={state}
         onSetEvaState={(newState) => setState(newState)}
         onSendPrompt={handleSendPrompt}
         lastResponseText={lastResponseText}
         onToggleVoice={handleToggleVoice}
+        onStopSpeaking={handleStopSpeaking}
+        selectedModel={settings.selectedModel}
+        onSelectModel={(model) => setSettings(prev => ({ ...prev, selectedModel: model as AIModelId }))}
       />
 
       {/* Proactive Alert Toast */}

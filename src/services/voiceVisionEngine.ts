@@ -282,9 +282,9 @@ export class VoiceVisionEngine {
 
   public getLiveDetections(): VisionDetection[] {
     return [
-      { id: 'det-1', label: 'Vivek (User Face)', confidence: 0.99, bbox: [200, 150, 420, 480], category: 'person' },
-      { id: 'det-2', label: 'Primary Workstation Screen', confidence: 0.96, bbox: [50, 50, 1200, 700], category: 'interface' },
-      { id: 'det-3', label: 'ASTRA 3D Grid Core', confidence: 0.98, bbox: [600, 100, 1000, 750], category: 'hologram' }
+      { id: 'det-1', label: 'Vivek (User Face)', confidence: 0.99, box: { x: 200, y: 150, width: 420, height: 480 }, category: 'person' },
+      { id: 'det-2', label: 'Primary Workstation Screen', confidence: 0.96, box: { x: 50, y: 50, width: 1200, height: 700 }, category: 'interface' },
+      { id: 'det-3', label: 'ASTRA 3D Grid Core', confidence: 0.98, box: { x: 600, y: 100, width: 1000, height: 750 }, category: 'hologram' }
     ];
   }
 }
