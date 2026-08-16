@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { AstraDesignSystemUI } from './components/ui/AstraDesignSystemUI';
 import { SettingsModal } from './components/ui/SettingsModal';
 import { OSDashboard } from './components/ui/OSDashboard';
@@ -34,6 +34,11 @@ export function App() {
   const [isCameraVisionOpen, setIsCameraVisionOpen] = useState(false);
   const [lastResponseText, setLastResponseText] = useState<string>('');
   const [hasGreeted, setHasGreeted] = useState(false);
+
+  // Background Prompt Queue Ref for Continuous Voice Listening & Turn-Taking
+  const promptQueueRef = useRef<string[]>([]);
+  const isProcessingRef = useRef<boolean>(false);
+  const processPromptRef = useRef<(prompt: string) => Promise<void>>(async () => {});
 
   // System States
   const [telemetry, setTelemetry] = useState<SystemTelemetryData>(systemTelemetry.getCurrentTelemetry());
@@ -83,31 +88,34 @@ export function App() {
     };
   }, []);
 
-  // Initial greeting trigger helper (Triggers ONLY ONCE on launch)
-  const triggerInitialGreeting = useCallback(() => {
-    if (hasGreeted) return;
-    setHasGreeted(true);
-    const greeting = voiceVisionEngine.getGreeting();
-    setLastResponseText(greeting);
-    setState('speaking');
-    voiceVisionEngine.speak(greeting, settings.voiceLanguage, () => {
-      setState('idle');
+  // Helper to re-arm continuous background mic listening for turn-taking
+  const armContinuousMicListener = useCallback(() => {
+    voiceVisionEngine.startListening((transcript, isFinal) => {
+      if (!isFinal && transcript.trim()) {
+        if (!isProcessingRef.current) {
+          setState('listening');
+        }
+        setLastResponseText(`Listening: "${transcript}"...`);
+      } else if (isFinal && transcript.trim()) {
+        if (isProcessingRef.current) {
+          // ASTRA is currently speaking or thinking: Queue the next question!
+          promptQueueRef.current.push(transcript.trim());
+          setLastResponseText(`Queued next question: "${transcript}"`);
+        } else {
+          // Immediately process the user's question
+          processPromptRef.current(transcript.trim());
+        }
+      }
     });
-  }, [hasGreeted, settings.voiceLanguage]);
+  }, []);
 
-  useEffect(() => {
-    if (!hasGreeted) {
-      triggerInitialGreeting();
-    }
-  }, [hasGreeted, triggerInitialGreeting]);
-
+  // Core Prompt Processor with Queue Drainage & Background Listening
   const processPrompt = useCallback(async (promptText: string) => {
-    // Stop mic listening during task execution
-    voiceVisionEngine.stopListening();
-    voiceVisionEngine.stopWakeWordListener();
-    clapDetectionEngine.stop();
-
+    isProcessingRef.current = true;
     const lower = promptText.toLowerCase().trim();
+
+    // Re-arm microphone in background while responding so next question can be queued
+    armContinuousMicListener();
 
     // Camera vision / object recognition directives
     if (lower.includes('camera') || lower.includes('holding') || lower.includes('surroundings') || lower.includes('what am i holding') || lower.includes('check environment')) {
@@ -120,7 +128,18 @@ export function App() {
       
       setLastResponseText(ackText);
       setState('speaking');
-      if (settings.soundEnabled) voiceVisionEngine.speak(ackText, settings.voiceLanguage, () => setState('idle'));
+      if (settings.soundEnabled) {
+        voiceVisionEngine.speak(ackText, settings.voiceLanguage, () => {
+          isProcessingRef.current = false;
+          if (promptQueueRef.current.length > 0) {
+            const nextPrompt = promptQueueRef.current.shift()!;
+            processPromptRef.current(nextPrompt);
+          } else {
+            setState('idle');
+            armContinuousMicListener();
+          }
+        });
+      }
       return;
     }
 
@@ -135,36 +154,23 @@ export function App() {
       memoryEngine.addMemory(`User: ${promptText} | ASTRA: Opened ${result.title}`, 'action', ['app-launcher']);
       
       if (settings.soundEnabled) {
-        voiceVisionEngine.speak(ackText, settings.voiceLanguage, () => setState('idle'));
-      } else {
-        setTimeout(() => setState('idle'), 2500);
+        voiceVisionEngine.speak(ackText, settings.voiceLanguage, () => {
+          isProcessingRef.current = false;
+          if (promptQueueRef.current.length > 0) {
+            const nextPrompt = promptQueueRef.current.shift()!;
+            processPromptRef.current(nextPrompt);
+          } else {
+            setState('idle');
+            armContinuousMicListener();
+          }
+        });
       }
-      return;
-    }
-
-    // Check for open screens directive
-    if (lower.includes('open screen') || lower.includes('show screen') || lower.includes('screens')) {
-      setIsJarvisScreensOpen(true);
-      const ackText = "Opening 3D HUD displays for you now, Vivek.";
-      setLastResponseText(ackText);
-      setState('speaking');
-      if (settings.soundEnabled) voiceVisionEngine.speak(ackText, settings.voiceLanguage, () => setState('idle'));
-      return;
-    }
-
-    // Check for chat cards directive
-    if (lower.includes('show chat') || lower.includes('chat history') || lower.includes('chat card')) {
-      setIsChatHistoryOpen(true);
-      const ackText = "Opening persistent chat cards for you now, Vivek.";
-      setLastResponseText(ackText);
-      setState('speaking');
-      if (settings.soundEnabled) voiceVisionEngine.speak(ackText, settings.voiceLanguage, () => setState('idle'));
       return;
     }
 
     // 1. Visual processing status
     setState('thinking');
-    setLastResponseText("ASTRA is processing your directive, Vivek...");
+    setLastResponseText(`ASTRA processing: "${promptText}"...`);
 
     const recommendation = aiEngine.selectOptimalModel(promptText);
     const chosenModel: AIModelId = settings.autoModelSelect ? recommendation.modelId : settings.selectedModel;
@@ -179,42 +185,73 @@ export function App() {
     // Save conversation interaction persistently into local memory vault
     memoryEngine.addMemory(`User: ${promptText} | ASTRA: ${res.text.substring(0, 150)}...`, 'conversation', ['q-and-a']);
 
-    // 3. Speak SINGLE clean audio response directly & re-arm mic when TTS completes
+    // 3. Speak response out loud & drain prompt queue for next question
     setLastResponseText(res.text);
     setState('speaking');
 
     if (settings.soundEnabled) {
       voiceVisionEngine.speak(res.text, settings.voiceLanguage, () => {
-        // Transition back to idle cleanly
-        setState('idle');
-        // Re-arm microphone listening for the NEXT question in turn-taking conversation
-        voiceVisionEngine.startListening((transcript, isFinal) => {
-          if (!isFinal && transcript.trim()) {
-            setState('listening');
-            setLastResponseText(`Listening to Vivek: "${transcript}"...`);
-          } else if (isFinal && transcript.trim()) {
-            voiceVisionEngine.stopListening();
-            processPrompt(transcript);
-          }
-        });
+        isProcessingRef.current = false;
+
+        // Drain Next Queued Question if user spoke while ASTRA was responding!
+        if (promptQueueRef.current.length > 0) {
+          const nextPrompt = promptQueueRef.current.shift()!;
+          processPromptRef.current(nextPrompt);
+        } else {
+          setState('idle');
+          armContinuousMicListener();
+        }
       });
     } else {
       setTimeout(() => {
-        setState('idle');
-      }, 4000);
+        isProcessingRef.current = false;
+        if (promptQueueRef.current.length > 0) {
+          const nextPrompt = promptQueueRef.current.shift()!;
+          processPromptRef.current(nextPrompt);
+        } else {
+          setState('idle');
+          armContinuousMicListener();
+        }
+      }, 3500);
     }
-  }, [settings.autoModelSelect, settings.selectedModel, settings.voiceLanguage, settings.soundEnabled]);
+  }, [settings.autoModelSelect, settings.selectedModel, settings.voiceLanguage, settings.soundEnabled, armContinuousMicListener]);
+
+  // Sync processPromptRef
+  useEffect(() => {
+    processPromptRef.current = processPrompt;
+  }, [processPrompt]);
+
+  // Initial greeting trigger helper (Triggers ONLY ONCE on launch)
+  const triggerInitialGreeting = useCallback(() => {
+    if (hasGreeted) return;
+    setHasGreeted(true);
+    const greeting = voiceVisionEngine.getGreeting();
+    setLastResponseText(greeting);
+    setState('speaking');
+    isProcessingRef.current = true;
+
+    voiceVisionEngine.speak(greeting, settings.voiceLanguage, () => {
+      isProcessingRef.current = false;
+      setState('idle');
+      armContinuousMicListener();
+    });
+  }, [hasGreeted, settings.voiceLanguage, armContinuousMicListener]);
+
+  useEffect(() => {
+    if (!hasGreeted) {
+      triggerInitialGreeting();
+    }
+  }, [hasGreeted, triggerInitialGreeting]);
 
   // Handle Prompt Submission (Multi-Model Routing + Voice TTS Response)
   const handleSendPrompt = useCallback(async (promptText: string) => {
-    // Strictly ONLY ask confirmation for dangerous destructive commands (del / format)
     if (promptText.toLowerCase().includes('del /f') || promptText.toLowerCase().includes('format') || promptText.toLowerCase().includes('rm -rf')) {
       safetyGatekeeper.requestAuthorization(
         'Execute System Deletion Directive',
         `User requested dangerous operation: "${promptText}". Require explicit authorization.`,
         `powershell -Command "${promptText}"`,
         async () => {
-          await processPrompt(promptText);
+          await processPromptRef.current(promptText);
         },
         () => {
           setState('idle');
@@ -222,9 +259,14 @@ export function App() {
         }
       );
     } else {
-      await processPrompt(promptText);
+      if (isProcessingRef.current) {
+        promptQueueRef.current.push(promptText.trim());
+        setLastResponseText(`Queued next question: "${promptText}"`);
+      } else {
+        await processPromptRef.current(promptText);
+      }
     }
-  }, [processPrompt]);
+  }, []);
 
   // Handle Direct Execution from HUD Screens
   const handleExecuteCommand = async (cmd: string) => {
@@ -239,15 +281,7 @@ export function App() {
       clapDetectionEngine.start(settings.micSensitivity, (clapType) => {
         if (clapType === 'single' || clapType === 'double') {
           setState('listening');
-          voiceVisionEngine.startListening((transcript, isFinal) => {
-            if (!isFinal && transcript.trim()) {
-              setState('listening');
-              setLastResponseText(`Listening to Vivek: "${transcript}"...`);
-            } else if (isFinal && transcript.trim()) {
-              voiceVisionEngine.stopListening();
-              handleSendPrompt(transcript);
-            }
-          });
+          armContinuousMicListener();
         } else if (clapType === 'triple') {
           setIsJarvisScreensOpen(true);
           setIsDashboardOpen(true);
@@ -261,22 +295,14 @@ export function App() {
     return () => {
       clapDetectionEngine.stop();
     };
-  }, [state, settings.micSensitivity, settings.voiceLanguage, handleSendPrompt]);
+  }, [state, settings.micSensitivity, armContinuousMicListener]);
 
-  // Wake-word Listener Effect ("Hey ASTRA" / "ASTRA" / "FRIDAY" / "Computer") - Active ONLY when idle
+  // Wake-word Listener Effect ("Hey ASTRA" / "ASTRA" / "FRIDAY" / "Computer")
   useEffect(() => {
     if (settings.wakeWordEnabled && state === 'idle') {
       voiceVisionEngine.startWakeWordListener(() => {
         setState('listening');
-        voiceVisionEngine.startListening((transcript, isFinal) => {
-          if (!isFinal && transcript.trim()) {
-            setState('listening');
-            setLastResponseText(`Listening to Vivek: "${transcript}"...`);
-          } else if (isFinal && transcript.trim()) {
-            voiceVisionEngine.stopListening();
-            handleSendPrompt(transcript);
-          }
-        });
+        armContinuousMicListener();
       });
     } else {
       voiceVisionEngine.stopWakeWordListener();
@@ -285,26 +311,19 @@ export function App() {
     return () => {
       voiceVisionEngine.stopWakeWordListener();
     };
-  }, [state, settings.wakeWordEnabled, settings.voiceLanguage, handleSendPrompt]);
+  }, [state, settings.wakeWordEnabled, armContinuousMicListener]);
 
   // Handle Voice Toggle (Mic Button)
   const handleToggleVoice = useCallback(() => {
     if (state === 'speaking') {
       voiceVisionEngine.stopSpeaking();
       setState('idle');
+      armContinuousMicListener();
     } else if (state === 'idle' || state === 'listening') {
       setState('listening');
-      voiceVisionEngine.startListening((transcript, isFinal) => {
-        if (!isFinal && transcript.trim()) {
-          setState('listening');
-          setLastResponseText(`Listening to Vivek: "${transcript}"...`);
-        } else if (isFinal && transcript.trim()) {
-          voiceVisionEngine.stopListening();
-          handleSendPrompt(transcript);
-        }
-      });
+      armContinuousMicListener();
     }
-  }, [state, handleSendPrompt]);
+  }, [state, armContinuousMicListener]);
 
   const handleUpdateSettings = (newSettings: Partial<SystemSettings>) => {
     setSettings((prev) => ({ ...prev, ...newSettings }));
