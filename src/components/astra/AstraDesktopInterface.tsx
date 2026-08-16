@@ -1,14 +1,16 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence, motion } from 'framer-motion';
 import { 
   Home, MessageSquare, CheckSquare, Calendar as CalendarIcon, 
   FileText, Folder, Briefcase, Wrench, Settings as SettingsIcon,
   Mic, Bell, Moon, Sun, Sparkles, ChevronRight,
-  ChevronDown, FileCode, Layers, Scissors, Globe, ImageIcon
+  ChevronDown, FileCode, Layers, Scissors, Globe, ImageIcon,
+  X, Activity, Cpu, HardDrive, Wifi
 } from 'lucide-react';
 import type { EvaState } from '../../types/eva';
 import { AstraResponse } from './AstraResponse';
 import { AstraSettings } from './AstraSettings';
+import { AstraOrb } from './AstraOrb';
 import { CameraWidget } from './AstraWidgets/CameraWidget';
 import { KnowledgeRAGWidget } from './AstraWidgets/KnowledgeRAGWidget';
 import { vectorStoreService } from '../../services/rag/vectorStore';
@@ -39,24 +41,34 @@ export const AstraDesktopInterface: React.FC<AstraDesktopInterfaceProps> = ({
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isRAGOpen, setIsRAGOpen] = useState(false);
+  const [isOrbCanvasOpen, setIsOrbCanvasOpen] = useState(false);
+
   const [weather, setWeather] = useState<GoogleWeatherData | null>(null);
   const [ragDocsCount, setRagDocsCount] = useState(vectorStoreService.getAllDocuments().length);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const [currentTime, setCurrentTime] = useState('10:42 PM');
   const [currentDateStr, setCurrentDateStr] = useState('Friday, 16 May');
+  const [greetingTitle, setGreetingTitle] = useState('Good Evening, Vivek! 👋');
 
   // Dynamic Yellow Glowing Voice Line Path State
   const [wavePoints, setWavePoints] = useState<number[]>(Array(40).fill(0));
 
   useEffect(() => {
-    const updateTime = () => {
+    const updateTimeAndGreeting = () => {
       const now = new Date();
       setCurrentTime(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
       setCurrentDateStr(now.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'short' }));
+
+      const hour = now.getHours();
+      if (hour >= 5 && hour < 12) setGreetingTitle('Good Morning, Vivek! 👋');
+      else if (hour >= 12 && hour < 17) setGreetingTitle('Good Afternoon, Vivek! 👋');
+      else if (hour >= 17 && hour < 22) setGreetingTitle('Good Evening, Vivek! 👋');
+      else setGreetingTitle('Good Night, Vivek! 👋');
     };
-    updateTime();
-    const interval = setInterval(updateTime, 1000);
+
+    updateTimeAndGreeting();
+    const interval = setInterval(updateTimeAndGreeting, 1000);
     return () => clearInterval(interval);
   }, []);
 
@@ -240,7 +252,11 @@ export const AstraDesktopInterface: React.FC<AstraDesktopInterfaceProps> = ({
                 return (
                   <button
                     key={item.name}
-                    onClick={() => setActiveTab(item.name)}
+                    onClick={() => {
+                      setActiveTab(item.name);
+                      if (item.name === 'Smart Tools') setIsRAGOpen(true);
+                      if (item.name === 'Settings') setIsSettingsOpen(true);
+                    }}
                     className={`w-full px-3.5 py-2.5 rounded-2xl flex items-center justify-between transition-all ${
                       isActive 
                         ? 'bg-gradient-to-r from-amber-500/25 to-yellow-500/10 border border-amber-500/40 text-amber-300 font-bold shadow-[0_0_15px_rgba(245,158,11,0.2)]' 
@@ -276,7 +292,7 @@ export const AstraDesktopInterface: React.FC<AstraDesktopInterfaceProps> = ({
             {/* Welcome & System Status Card */}
             <div className="p-4 rounded-3xl bg-[#0e0a1f]/75 border border-white/15 backdrop-blur-3xl shadow-2xl flex flex-col gap-3 text-xs">
               <div>
-                <h3 className="font-bold text-white text-sm">Good Evening, Vivek! 👋</h3>
+                <h3 className="font-bold text-white text-sm">{greetingTitle}</h3>
                 <p className="text-[10px] text-amber-200/80 font-mono">Astra is here to help you.</p>
               </div>
 
@@ -294,22 +310,22 @@ export const AstraDesktopInterface: React.FC<AstraDesktopInterfaceProps> = ({
               {/* Resource Bars */}
               <div className="flex flex-col gap-1.5 font-mono text-[10px]">
                 <div className="flex justify-between items-center">
-                  <span className="text-white/60">CPU</span>
+                  <span className="text-white/60 flex items-center gap-1"><Cpu className="w-3 h-3 text-cyan-400" /> CPU</span>
                   <div className="w-24 h-1.5 rounded-full bg-white/10 overflow-hidden"><div className="w-[34%] h-full bg-cyan-400" /></div>
                   <span className="text-white">34%</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-white/60">RAM</span>
+                  <span className="text-white/60 flex items-center gap-1"><Activity className="w-3 h-3 text-purple-400" /> RAM</span>
                   <div className="w-24 h-1.5 rounded-full bg-white/10 overflow-hidden"><div className="w-[62%] h-full bg-purple-400" /></div>
                   <span className="text-white">62%</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-white/60">Storage</span>
+                  <span className="text-white/60 flex items-center gap-1"><HardDrive className="w-3 h-3 text-amber-400" /> Storage</span>
                   <div className="w-24 h-1.5 rounded-full bg-white/10 overflow-hidden"><div className="w-[71%] h-full bg-amber-400" /></div>
                   <span className="text-white">71%</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-white/60">Network</span>
+                  <span className="text-white/60 flex items-center gap-1"><Wifi className="w-3 h-3 text-emerald-400" /> Network</span>
                   <div className="w-24 h-1.5 rounded-full bg-white/10 overflow-hidden"><div className="w-[89%] h-full bg-emerald-400" /></div>
                   <span className="text-white">89%</span>
                 </div>
@@ -426,6 +442,34 @@ export const AstraDesktopInterface: React.FC<AstraDesktopInterfaceProps> = ({
                 <div className="mb-4">
                   <KnowledgeRAGWidget />
                 </div>
+              )}
+            </AnimatePresence>
+
+            {/* Interactive 3D Three.js Golden Mechanical Orb Canvas Overlay */}
+            <AnimatePresence>
+              {isOrbCanvasOpen && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/80 backdrop-blur-2xl p-4"
+                >
+                  <button
+                    onClick={() => setIsOrbCanvasOpen(false)}
+                    className="absolute top-6 right-6 p-3 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white"
+                  >
+                    <X className="w-6 h-6" />
+                  </button>
+                  <h2 className="text-xl font-bold text-amber-300 tracking-widest font-mono mb-2">
+                    ASTRA 3D MECHANICAL CHAKRA ORB
+                  </h2>
+                  <p className="text-xs text-white/60 font-mono mb-4">
+                    Drag to rotate 360° • Scroll to zoom
+                  </p>
+                  <div className="w-[360px] h-[360px] md:w-[500px] md:h-[500px]">
+                    <AstraOrb state={state} showStatusPill={true} />
+                  </div>
+                </motion.div>
               )}
             </AnimatePresence>
 
@@ -552,76 +596,94 @@ export const AstraDesktopInterface: React.FC<AstraDesktopInterfaceProps> = ({
 
         </div>
 
-        {/* BOTTOM CARDS ROW: RECENT CONVERSATIONS, SUGGESTIONS, MEMORY LANE, VOICE & ORB PREVIEW */}
-        <div className="w-full grid grid-cols-12 gap-3.5 items-center pt-1">
+        {/* BOTTOM CARDS ROW: RECENT CONVERSATIONS, SUGGESTIONS, MEMORY LANE, VOICE & ORB PREVIEW (5 CARDS EXACT MATCH TO MOCKUP) */}
+        <div className="w-full grid grid-cols-5 gap-3.5 items-stretch pt-1">
           
-          {/* Recent Conversations */}
-          <div className="col-span-3 p-3.5 rounded-3xl bg-[#0e0a1f]/75 border border-white/15 backdrop-blur-3xl shadow-2xl flex flex-col gap-2 text-xs">
+          {/* Card 1: Recent Conversations */}
+          <div className="p-3.5 rounded-3xl bg-[#0e0a1f]/75 border border-white/15 backdrop-blur-3xl shadow-2xl flex flex-col justify-between text-xs">
             <div className="flex justify-between items-center border-b border-white/10 pb-1.5">
               <span className="font-bold text-white text-[11px]">Recent Conversations</span>
               <span className="text-[9px] text-cyan-400 font-mono cursor-pointer">View all</span>
             </div>
-            <div className="flex flex-col gap-1.5 text-[10px] text-white/70 font-sans">
-              <div className="flex justify-between cursor-pointer hover:text-white"><span className="truncate max-w-[150px]">• Create a production schedule</span><span className="text-[8px] text-white/40 font-mono">10:21 PM</span></div>
-              <div className="flex justify-between cursor-pointer hover:text-white"><span className="truncate max-w-[150px]">• Summarize this PDF for me</span><span className="text-[8px] text-white/40 font-mono">09:15 PM</span></div>
-              <div className="flex justify-between cursor-pointer hover:text-white"><span className="truncate max-w-[150px]">• Best places in Uttarakhand</span><span className="text-[8px] text-white/40 font-mono">06:42 PM</span></div>
-              <div className="flex justify-between cursor-pointer hover:text-white"><span className="truncate max-w-[150px]">• Explain Quantum Computing</span><span className="text-[8px] text-white/40 font-mono">07:30 PM</span></div>
+            <div className="flex flex-col gap-1.5 text-[10px] text-white/70 font-sans mt-2">
+              <div onClick={() => onSendPrompt('Create a production schedule')} className="flex justify-between cursor-pointer hover:text-white"><span className="truncate max-w-[130px]">• Create a production schedule</span><span className="text-[8px] text-white/40 font-mono">10:21 PM</span></div>
+              <div onClick={() => onSendPrompt('Summarize this PDF for me')} className="flex justify-between cursor-pointer hover:text-white"><span className="truncate max-w-[130px]">• Summarize this PDF for me</span><span className="text-[8px] text-white/40 font-mono">09:15 PM</span></div>
+              <div onClick={() => onSendPrompt('Best places to visit in Uttarakhand')} className="flex justify-between cursor-pointer hover:text-white"><span className="truncate max-w-[130px]">• Best places in Uttarakhand</span><span className="text-[8px] text-white/40 font-mono">06:42 PM</span></div>
+              <div onClick={() => onSendPrompt('Explain Quantum Computing')} className="flex justify-between cursor-pointer hover:text-white"><span className="truncate max-w-[130px]">• Explain Quantum Computing</span><span className="text-[8px] text-white/40 font-mono">07:30 PM</span></div>
             </div>
           </div>
 
-          {/* Astra Suggestions */}
-          <div className="col-span-3 p-3.5 rounded-3xl bg-[#0e0a1f]/75 border border-white/15 backdrop-blur-3xl shadow-2xl flex flex-col gap-2 text-xs">
-            <span className="font-bold text-amber-300 text-[11px] border-b border-white/10 pb-1.5">Astra Suggestions</span>
-            <div className="flex flex-col gap-1 text-[10px] text-white/80 font-mono">
-              <p className="text-amber-300">• Meeting in 48 mins: Project Discussion</p>
+          {/* Card 2: Astra Suggestions */}
+          <div className="p-3.5 rounded-3xl bg-[#0e0a1f]/75 border border-white/15 backdrop-blur-3xl shadow-2xl flex flex-col justify-between text-xs">
+            <div className="flex justify-between items-center border-b border-white/10 pb-1.5">
+              <span className="font-bold text-amber-300 text-[11px]">Astra Suggestions</span>
+              <span className="text-[9px] text-white/40 font-mono">For you</span>
+            </div>
+            <div className="flex flex-col gap-2 text-[10px] text-white/80 font-mono mt-2">
+              <p className="text-amber-300">• You have a meeting in 48 mins (Project Discussion)</p>
               <p className="text-cyan-300">• Your system is running smoothly</p>
-              <p className="text-purple-300">• Auto-learning RAG indexed {ragDocsCount} documents</p>
+              <p className="text-purple-300">• Take a break, you've been working for 2h 15m</p>
             </div>
           </div>
 
-          {/* Memory Lane */}
-          <div className="col-span-3 p-3.5 rounded-3xl bg-[#0e0a1f]/75 border border-white/15 backdrop-blur-3xl shadow-2xl flex flex-col gap-2 text-xs">
-            <span className="font-bold text-purple-300 text-[11px] border-b border-white/10 pb-1.5">Memory Lane</span>
-            <div className="flex items-center gap-2 text-[10px] font-mono">
-              <div className="p-2 rounded-xl bg-black/40 border border-white/10 flex flex-col items-center text-amber-300 flex-1">
+          {/* Card 3: Memory Lane */}
+          <div className="p-3.5 rounded-3xl bg-[#0e0a1f]/75 border border-white/15 backdrop-blur-3xl shadow-2xl flex flex-col justify-between text-xs">
+            <div className="flex justify-between items-center border-b border-white/10 pb-1.5">
+              <span className="font-bold text-purple-300 text-[11px]">Memory Lane</span>
+              <span className="text-[9px] text-white/40 font-mono">Worked on</span>
+            </div>
+            <div className="flex items-center gap-2 text-[10px] font-mono mt-2">
+              <div onClick={() => setIsRAGOpen(true)} className="p-2 rounded-xl bg-black/40 border border-white/10 flex flex-col items-center text-amber-300 flex-1 cursor-pointer hover:border-amber-400">
                 <Folder className="w-4 h-4 mb-1" />
-                <span className="truncate max-w-[65px]">Oldverse</span>
+                <span className="truncate max-w-[55px]">Oldverse</span>
                 <span className="text-[8px] text-white/40">Today</span>
               </div>
-              <div className="p-2 rounded-xl bg-black/40 border border-white/10 flex flex-col items-center text-rose-400 flex-1">
+              <div onClick={() => setIsRAGOpen(true)} className="p-2 rounded-xl bg-black/40 border border-white/10 flex flex-col items-center text-rose-400 flex-1 cursor-pointer hover:border-rose-400">
                 <FileCode className="w-4 h-4 mb-1" />
-                <span className="truncate max-w-[65px]">Brief.pdf</span>
+                <span className="truncate max-w-[55px]">Brief.pdf</span>
                 <span className="text-[8px] text-white/40">Yesterday</span>
               </div>
-              <div className="p-2 rounded-xl bg-black/40 border border-white/10 flex flex-col items-center text-cyan-300 flex-1">
+              <div onClick={() => setIsRAGOpen(true)} className="p-2 rounded-xl bg-black/40 border border-white/10 flex flex-col items-center text-cyan-300 flex-1 cursor-pointer hover:border-cyan-400">
                 <ImageIcon className="w-4 h-4 mb-1" />
-                <span className="truncate max-w-[65px]">Moodboard</span>
+                <span className="truncate max-w-[55px]">Moodboard</span>
                 <span className="text-[8px] text-white/40">Yesterday</span>
               </div>
             </div>
           </div>
 
-          {/* Astra Voice & Bottom Bar Dock */}
-          <div className="col-span-3 p-3.5 rounded-3xl bg-[#0e0a1f]/75 border border-amber-500/30 backdrop-blur-3xl shadow-2xl flex items-center justify-between gap-2 text-xs">
+          {/* Card 4: Astra Voice */}
+          <div className="p-3.5 rounded-3xl bg-[#0e0a1f]/75 border border-amber-500/30 backdrop-blur-3xl shadow-2xl flex flex-col justify-between text-xs">
+            <div className="flex justify-between items-center border-b border-white/10 pb-1.5">
+              <span className="font-bold text-amber-300 text-[11px]">Astra Voice</span>
+              <span className="text-[9px] text-white/40 font-mono">Click to talk</span>
+            </div>
             <button
               onClick={onToggleVoice}
-              className={`flex-1 py-2.5 px-3 rounded-2xl flex items-center justify-center gap-2 font-bold transition-all active:scale-95 ${
+              className={`w-full py-3 px-3 rounded-2xl flex flex-col items-center justify-center gap-1 font-bold transition-all active:scale-95 mt-2 ${
                 state === 'speaking' || state === 'listening'
                   ? 'bg-amber-400 text-black animate-pulse shadow-[0_0_20px_rgba(245,158,11,0.8)]'
                   : 'bg-white/10 border border-white/15 text-amber-300 hover:bg-white/20'
               }`}
             >
               <Mic className="w-4 h-4" />
-              <span className="text-[11px] font-mono">{state === 'listening' ? 'Listening...' : 'Talk to Astra'}</span>
+              <span className="text-[10px] font-mono">{state === 'listening' ? 'Listening...' : "I'm listening..."}</span>
             </button>
+          </div>
 
-            <button
-              onClick={() => setIsSettingsOpen(true)}
-              className="p-2.5 rounded-2xl bg-white/10 border border-white/15 text-white hover:bg-white/20"
-              title="ASTRA Settings"
-            >
-              <SettingsIcon className="w-4 h-4" />
-            </button>
+          {/* Card 5: Astra Orb (Click to focus) */}
+          <div 
+            onClick={() => setIsOrbCanvasOpen(true)}
+            className="p-3.5 rounded-3xl bg-[#0e0a1f]/75 border border-amber-500/40 hover:border-amber-400 backdrop-blur-3xl shadow-2xl flex flex-col justify-between text-xs cursor-pointer group transition-all"
+          >
+            <div className="flex justify-between items-center border-b border-white/10 pb-1.5">
+              <span className="font-bold text-amber-300 text-[11px]">Astra Orb</span>
+              <span className="text-[9px] text-amber-400/80 font-mono group-hover:text-amber-200">Click to focus</span>
+            </div>
+            <div className="flex flex-col items-center justify-center my-auto py-1">
+              <div className="w-12 h-12 rounded-full border border-amber-400/60 p-1 flex items-center justify-center animate-spin">
+                <Sparkles className="w-6 h-6 text-amber-300" />
+              </div>
+            </div>
           </div>
 
         </div>
