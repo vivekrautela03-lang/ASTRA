@@ -7,12 +7,14 @@ interface AstraOrbProps {
   state: EvaState;
   audioLevel?: number;
   onOrbClick?: () => void;
+  showStatusPill?: boolean;
 }
 
 export const AstraOrb: React.FC<AstraOrbProps> = ({
   state,
   audioLevel = 0.2,
-  onOrbClick
+  onOrbClick,
+  showStatusPill = false
 }) => {
   const getStatusBadge = () => {
     switch (state) {
@@ -61,14 +63,16 @@ export const AstraOrb: React.FC<AstraOrbProps> = ({
 
   return (
     <div className="relative flex flex-col items-center justify-center">
-      {/* Status Pill Header */}
-      <div
-        onClick={onOrbClick}
-        className={`cursor-pointer px-4 py-1.5 rounded-full border backdrop-blur-2xl text-xs font-mono tracking-widest flex items-center gap-2 mb-2 transition-all ${badge.color}`}
-      >
-        <Icon className="w-3.5 h-3.5" />
-        <span>{badge.label}</span>
-      </div>
+      {/* Optional Status Pill Header (Hidden by default to keep middle screen clean) */}
+      {showStatusPill && (
+        <div
+          onClick={onOrbClick}
+          className={`cursor-pointer px-4 py-1.5 rounded-full border backdrop-blur-2xl text-xs font-mono tracking-widest flex items-center gap-2 mb-2 transition-all ${badge.color}`}
+        >
+          <Icon className="w-3.5 h-3.5" />
+          <span>{badge.label}</span>
+        </div>
+      )}
 
       {/* 3D Golden Mechanical Orb Canvas Container */}
       <div className="w-[320px] h-[320px] md:w-[420px] md:h-[420px] relative">
