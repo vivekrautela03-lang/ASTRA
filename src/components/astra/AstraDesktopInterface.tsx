@@ -4,8 +4,8 @@ import {
   Home, MessageSquare, CheckSquare, Calendar as CalendarIcon, 
   FileText, Folder, Briefcase, Wrench, Settings as SettingsIcon,
   Mic, Bell, Moon, Sun, Sparkles, ChevronRight,
-  ChevronDown, FileCode, Layers, Scissors, Globe, ImageIcon,
-  X, Activity, Cpu, HardDrive, Wifi
+  FileCode, Layers, Scissors, Globe, ImageIcon,
+  X, Activity, Cpu, HardDrive, Wifi, Menu, UserCheck
 } from 'lucide-react';
 import type { EvaState } from '../../types/eva';
 import { AstraResponse } from './AstraResponse';
@@ -38,6 +38,7 @@ export const AstraDesktopInterface: React.FC<AstraDesktopInterfaceProps> = ({
 }) => {
   const [inputText, setInputText] = useState('');
   const [activeTab, setActiveTab] = useState('Home');
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isRAGOpen, setIsRAGOpen] = useState(false);
@@ -177,8 +178,16 @@ export const AstraDesktopInterface: React.FC<AstraDesktopInterfaceProps> = ({
         {/* TOP FLOATING BAR */}
         <div className="w-full flex items-center justify-between gap-3 shrink-0">
           
-          {/* Top Left Logo */}
+          {/* Top Left Hamburger Button & Logo */}
           <div className="flex items-center gap-2.5">
+            <button
+              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+              className="p-2 rounded-xl bg-[#0e0a1f]/85 hover:bg-[#1a123a] border border-white/15 backdrop-blur-3xl text-amber-300 transition-all active:scale-95 shadow-md shadow-amber-500/10"
+              title="Toggle Menu"
+            >
+              {isSidebarOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+            </button>
+
             <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-amber-500 via-yellow-400 to-amber-600 p-0.5 shadow-md shadow-amber-500/20">
               <div className="w-full h-full rounded-[5px] bg-[#0d0926] flex items-center justify-center">
                 <Sparkles className="w-3 h-3 text-amber-300 animate-pulse" />
@@ -238,64 +247,20 @@ export const AstraDesktopInterface: React.FC<AstraDesktopInterfaceProps> = ({
           </div>
         </div>
 
-        {/* MAIN DESKTOP GRID LAYOUT (RESPONSIVE FLEX OVERFLOW FIT) */}
+        {/* MAIN DESKTOP GRID LAYOUT */}
         <div className="w-full flex-1 grid grid-cols-12 gap-2.5 items-stretch overflow-hidden">
           
-          {/* LEFT COLUMN: FLOATING SIDEBAR & LEFT CARDS (3 COLS) */}
+          {/* LEFT COLUMN: SYSTEM STATUS, TODAY'S OVERVIEW & LIVE WEATHER (3 COLS) */}
           <div className="col-span-3 flex flex-col gap-2 justify-between overflow-hidden">
             
-            {/* Sidebar Navigation Glass Card */}
-            <div className="p-2 rounded-2xl bg-[#0e0a1f]/80 border border-white/15 backdrop-blur-3xl shadow-xl flex flex-col gap-0.5 text-[11px]">
-              {navItems.map(item => {
-                const Icon = item.icon;
-                const isActive = activeTab === item.name;
-                return (
-                  <button
-                    key={item.name}
-                    onClick={() => {
-                      setActiveTab(item.name);
-                      if (item.name === 'Smart Tools') setIsRAGOpen(true);
-                      if (item.name === 'Settings') setIsSettingsOpen(true);
-                    }}
-                    className={`w-full px-2.5 py-1.5 rounded-xl flex items-center justify-between transition-all ${
-                      isActive 
-                        ? 'bg-gradient-to-r from-amber-500/25 to-yellow-500/10 border border-amber-500/40 text-amber-300 font-bold shadow-[0_0_12px_rgba(245,158,11,0.2)]' 
-                        : 'text-white/70 hover:bg-white/5 hover:text-white'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Icon className={`w-3.5 h-3.5 ${isActive ? 'text-amber-400' : 'text-white/60'}`} />
-                      <span className="text-[11px]">{item.name}</span>
-                    </div>
-                    {isActive && <ChevronRight className="w-3 h-3 text-amber-400" />}
-                  </button>
-                );
-              })}
-
-              {/* User Profile Badge */}
-              <div className="mt-1 pt-1.5 border-t border-white/10 flex items-center justify-between px-1.5">
-                <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-amber-400 to-yellow-500 p-0.5">
-                    <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center text-[9px] font-bold text-amber-300">
-                      VR
-                    </div>
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-white text-[10px] tracking-wide">Vivek Rautela</h4>
-                    <p className="text-[8px] text-amber-200/80 font-mono">Premium User</p>
-                  </div>
-                </div>
-                <ChevronDown className="w-3 h-3 text-white/50" />
-              </div>
+            {/* Welcome & Greeting Card */}
+            <div className="p-3 rounded-2xl bg-[#0e0a1f]/80 border border-white/15 backdrop-blur-3xl shadow-xl flex flex-col gap-1 text-[11px]">
+              <h3 className="font-bold text-white text-xs">{greetingTitle}</h3>
+              <p className="text-[9px] text-amber-200/80 font-mono">Astra is here to help you.</p>
             </div>
 
-            {/* Welcome & System Status Card */}
-            <div className="p-3 rounded-2xl bg-[#0e0a1f]/80 border border-white/15 backdrop-blur-3xl shadow-xl flex flex-col gap-2 text-[11px]">
-              <div>
-                <h3 className="font-bold text-white text-xs">{greetingTitle}</h3>
-                <p className="text-[9px] text-amber-200/80 font-mono">Astra is here to help you.</p>
-              </div>
-
+            {/* System Status Card */}
+            <div className="p-3 rounded-2xl bg-[#0e0a1f]/80 border border-white/15 backdrop-blur-3xl shadow-xl flex flex-col gap-2 text-[11px] flex-1 justify-center">
               <div className="p-2 rounded-xl bg-black/40 border border-white/10 flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-full border-2 border-cyan-400/80 border-t-amber-400 flex items-center justify-center font-mono font-bold text-[10px] text-white">
                   98%
@@ -306,32 +271,32 @@ export const AstraDesktopInterface: React.FC<AstraDesktopInterfaceProps> = ({
                 </div>
               </div>
 
-              <div className="flex flex-col gap-1 font-mono text-[9px]">
+              <div className="flex flex-col gap-1.5 font-mono text-[9.5px]">
                 <div className="flex justify-between items-center">
-                  <span className="text-white/60 flex items-center gap-1"><Cpu className="w-2.5 h-2.5 text-cyan-400" /> CPU</span>
-                  <div className="w-20 h-1 rounded-full bg-white/10 overflow-hidden"><div className="w-[34%] h-full bg-cyan-400" /></div>
+                  <span className="text-white/60 flex items-center gap-1"><Cpu className="w-3 h-3 text-cyan-400" /> CPU</span>
+                  <div className="w-24 h-1.5 rounded-full bg-white/10 overflow-hidden"><div className="w-[34%] h-full bg-cyan-400" /></div>
                   <span className="text-white">34%</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-white/60 flex items-center gap-1"><Activity className="w-2.5 h-2.5 text-purple-400" /> RAM</span>
-                  <div className="w-20 h-1 rounded-full bg-white/10 overflow-hidden"><div className="w-[62%] h-full bg-purple-400" /></div>
+                  <span className="text-white/60 flex items-center gap-1"><Activity className="w-3 h-3 text-purple-400" /> RAM</span>
+                  <div className="w-24 h-1.5 rounded-full bg-white/10 overflow-hidden"><div className="w-[62%] h-full bg-purple-400" /></div>
                   <span className="text-white">62%</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-white/60 flex items-center gap-1"><HardDrive className="w-2.5 h-2.5 text-amber-400" /> Storage</span>
-                  <div className="w-20 h-1 rounded-full bg-white/10 overflow-hidden"><div className="w-[71%] h-full bg-amber-400" /></div>
+                  <span className="text-white/60 flex items-center gap-1"><HardDrive className="w-3 h-3 text-amber-400" /> Storage</span>
+                  <div className="w-24 h-1.5 rounded-full bg-white/10 overflow-hidden"><div className="w-[71%] h-full bg-amber-400" /></div>
                   <span className="text-white">71%</span>
                 </div>
                 <div className="flex justify-between items-center">
-                  <span className="text-white/60 flex items-center gap-1"><Wifi className="w-2.5 h-2.5 text-emerald-400" /> Network</span>
-                  <div className="w-20 h-1 rounded-full bg-white/10 overflow-hidden"><div className="w-[89%] h-full bg-emerald-400" /></div>
+                  <span className="text-white/60 flex items-center gap-1"><Wifi className="w-3 h-3 text-emerald-400" /> Network</span>
+                  <div className="w-24 h-1.5 rounded-full bg-white/10 overflow-hidden"><div className="w-[89%] h-full bg-emerald-400" /></div>
                   <span className="text-white">89%</span>
                 </div>
               </div>
             </div>
 
             {/* Today's Overview Card */}
-            <div className="p-2.5 rounded-2xl bg-[#0e0a1f]/80 border border-white/15 backdrop-blur-3xl shadow-xl flex flex-col gap-1.5 text-[11px]">
+            <div className="p-3 rounded-2xl bg-[#0e0a1f]/80 border border-white/15 backdrop-blur-3xl shadow-xl flex flex-col gap-1.5 text-[11px]">
               <div className="flex justify-between items-center border-b border-white/10 pb-1">
                 <span className="font-bold text-white">Today's Overview</span>
                 <span className="text-[9px] text-amber-300 font-mono cursor-pointer">View all</span>
@@ -340,11 +305,12 @@ export const AstraDesktopInterface: React.FC<AstraDesktopInterfaceProps> = ({
                 <div className="flex items-center gap-1.5"><span className="w-3.5 h-3.5 rounded bg-amber-500/20 text-amber-300 flex items-center justify-center text-[9px] font-bold">5</span> Tasks Pending</div>
                 <div className="flex items-center gap-1.5"><span className="w-3.5 h-3.5 rounded bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-[9px] font-bold">2</span> Meetings</div>
                 <div className="flex items-center gap-1.5"><span className="w-3.5 h-3.5 rounded bg-purple-500/20 text-purple-300 flex items-center justify-center text-[9px] font-bold">3</span> Reminders</div>
+                <div className="flex items-center gap-1.5"><span className="w-3.5 h-3.5 rounded bg-emerald-500/20 text-emerald-300 flex items-center justify-center text-[9px] font-bold">1</span> Important Event</div>
               </div>
             </div>
 
             {/* Live Weather Card */}
-            <div className="p-2.5 rounded-2xl bg-[#0e0a1f]/80 border border-white/15 backdrop-blur-3xl shadow-xl flex flex-col gap-1 text-[11px]">
+            <div className="p-3 rounded-2xl bg-[#0e0a1f]/80 border border-white/15 backdrop-blur-3xl shadow-xl flex flex-col gap-1 text-[11px]">
               <div className="flex justify-between items-center">
                 <div>
                   <span className="text-[8px] text-white/50 font-mono uppercase">Live Weather</span>
@@ -678,6 +644,73 @@ export const AstraDesktopInterface: React.FC<AstraDesktopInterfaceProps> = ({
         </div>
 
       </div>
+
+      {/* FLOATING SIDEBAR DRAWER OVERLAY (TRIGGERED BY HAMBURGER ICON) */}
+      <AnimatePresence>
+        {isSidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0, x: -60 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -60 }}
+            className="fixed top-12 left-3 z-50 w-64 p-3.5 rounded-3xl bg-[#0e0a1f]/95 border border-amber-500/40 backdrop-blur-3xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] flex flex-col gap-2 font-sans"
+          >
+            <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-amber-400" />
+                <span className="font-bold text-white text-xs tracking-wider">ASTRA NAVIGATION</span>
+              </div>
+              <button onClick={() => setIsSidebarOpen(false)} className="p-1 text-white/60 hover:text-white">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-1 text-xs">
+              {navItems.map(item => {
+                const Icon = item.icon;
+                const isActive = activeTab === item.name;
+                return (
+                  <button
+                    key={item.name}
+                    onClick={() => {
+                      setActiveTab(item.name);
+                      if (item.name === 'Smart Tools') setIsRAGOpen(true);
+                      if (item.name === 'Settings') setIsSettingsOpen(true);
+                      setIsSidebarOpen(false);
+                    }}
+                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between transition-all ${
+                      isActive 
+                        ? 'bg-gradient-to-r from-amber-500/30 to-yellow-500/10 border border-amber-500/50 text-amber-300 font-bold' 
+                        : 'text-white/70 hover:bg-white/10 hover:text-white'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Icon className={`w-4 h-4 ${isActive ? 'text-amber-400' : 'text-white/60'}`} />
+                      <span>{item.name}</span>
+                    </div>
+                    {isActive && <ChevronRight className="w-3.5 h-3.5 text-amber-400" />}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Profile Drawer Footer */}
+            <div className="mt-2 pt-2.5 border-t border-white/10 flex items-center justify-between px-1">
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-amber-400 to-yellow-500 p-0.5">
+                  <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center text-[10px] font-bold text-amber-300">
+                    VR
+                  </div>
+                </div>
+                <div>
+                  <h4 className="font-bold text-white text-[11px]">Vivek Rautela</h4>
+                  <p className="text-[8.5px] text-amber-200/80 font-mono">Premium User</p>
+                </div>
+              </div>
+              <UserCheck className="w-4 h-4 text-emerald-400" />
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Settings Modal */}
       <AstraSettings
