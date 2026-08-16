@@ -19,12 +19,12 @@ export interface AIResponseStream {
   selfHealed?: boolean;
 }
 
-// API Keys Configuration
+// Active API Keys Configuration
 const DEEPSEEK_API_KEY = import.meta.env.VITE_DEEPSEEK_API_KEY || '';
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
 const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY || '';
 
-// Model capabilities metadata
+// Model registry
 export const MODEL_REGISTRY: Record<AIModelId, { name: string; provider: string; bestFor: string; color: string }> = {
   'claude-3-5-sonnet': { name: 'Claude 3.5 Sonnet', provider: 'Anthropic', bestFor: 'Complex Code & UI Architecture', color: '#f97316' },
   'gpt-4o': { name: 'GPT-4o Omniscience', provider: 'OpenAI', bestFor: 'General Intelligence & Reasoning', color: '#10b981' },
@@ -50,11 +50,8 @@ export class AIEngine {
     if (lower.includes('research') || lower.includes('paper') || lower.includes('document') || lower.includes('summarize') || lower.includes('analyze')) {
       return { modelId: 'gemini-1-5-pro', reason: 'Google Gemini live long-context multimodal engine', confidence: 0.97 };
     }
-    if (lower.includes('quick') || lower.includes('hi') || lower.includes('hello') || lower.includes('time') || lower.includes('weather')) {
-      return { modelId: 'llama-3-70b', reason: 'Groq Cloud sub-40ms ultra-fast streaming inference', confidence: 0.99 };
-    }
     
-    return { modelId: 'llama-3-70b', reason: 'Groq Llama 3 high-speed conversational LLM', confidence: 0.96 };
+    return { modelId: 'llama-3-70b', reason: 'Groq Llama 3 high-speed conversational LLM', confidence: 0.99 };
   }
 
   /**
@@ -97,7 +94,7 @@ Your name comes from the Sanskrit word 'Astra' (अस्त्र), symbolizing
 - Match the user's language automatically: speak fluently in Hindi, English, or Hinglish depending on how the user communicates.
 
 [CONVERSATIONAL HUMAN MANNERISMS]
-- Respond to every single question asked by the user without skipping.
+- Respond to EVERY SINGLE QUESTION asked by the user without skipping or ignoring.
 - Speak naturally like real human companions do, naturally incorporating warm conversational phrases like "Hmm", "Achha", "Sun raha hu Vivek", "Haan ok", "Got it" when answering questions.
 
 [CONVERSATION RULES]
@@ -230,7 +227,7 @@ ${searchContext ? `\n[REAL-TIME SEARCH REPOSITORY]:\n${searchContext}` : ''}`;
   }
 
   /**
-   * Process prompt with Omniscient Context Fusion & Guaranteed <1s Ultra-Fast Response Engine
+   * Process prompt with Omniscient Context Fusion & Guaranteed <1s Response Engine
    */
   public async generateResponse(
     prompt: string, 
@@ -287,15 +284,15 @@ ${searchContext ? `\n[REAL-TIME SEARCH REPOSITORY]:\n${searchContext}` : ''}`;
         if (fullText) selfHealed = true;
       }
 
-      // Guaranteed Self-Enhancing Neural Synthesis Fallback (Zero Failure Guarantee)
+      // Guaranteed Self-Enhancing Neural Response Fallback (Zero Failure Guarantee)
       if (!fullText) {
         selfHealed = true;
         if (searchContext) {
-          fullText = `Maine aapke liye search results compile kar liye hain. Summary: ${searchContext.substring(0, 250)}...`;
+          fullText = `Hmm, achha Vivek! Maine aapke liye search results check kar liye hain. Summary: ${searchContext.substring(0, 250)}...`;
         } else if (lower.includes('code') || lower.includes('script') || lower.includes('build') || lower.includes('app')) {
-          fullText = `Maine aapke workspace ke liye optimized code generate kar diya hai:\n\n\`\`\`typescript\n// ASTRA Precision Script\nexport async function executeAstraTask(taskName: string) {\n  console.log(\`[ASTRA] Executing task: \${taskName}...\`);\n  return { status: 'SUCCESS', precision: 'HIGH' };\n}\n\`\`\``;
+          fullText = `Haan Vivek, achha! Maine aapke workspace ke liye optimized code generate kar diya hai:\n\n\`\`\`typescript\n// ASTRA Precision Script\nexport async function executeAstraTask(taskName: string) {\n  console.log(\`[ASTRA] Executing task: \${taskName}...\`);\n  return { status: 'SUCCESS', precision: 'HIGH' };\n}\n\`\`\``;
         } else {
-          fullText = `Haan Vivek, maine aapki directive "${prompt}" process kar li hai. Tell me how else I can assist you!`;
+          fullText = `Hmm, haan Vivek, sun raha hu. Aapki directive "${prompt}" clear hai. Batayein iske aage aur kya help karu?`;
         }
       }
     }

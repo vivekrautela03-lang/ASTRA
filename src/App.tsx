@@ -73,6 +73,16 @@ export function App() {
     };
   }, []);
 
+  // Global User Interaction Audio & Mic Unlocker (Bypasses Browser Autoplay Restrictions)
+  useEffect(() => {
+    const handleFirstClick = () => {
+      voiceVisionEngine.speak(' ', 'bilingual');
+      armContinuousMicListener();
+    };
+    window.addEventListener('click', handleFirstClick);
+    return () => window.removeEventListener('click', handleFirstClick);
+  }, [armContinuousMicListener]);
+
   // Subscriptions
   useEffect(() => {
     const unsubTelemetry = systemTelemetry.subscribe(data => setTelemetry(data));
