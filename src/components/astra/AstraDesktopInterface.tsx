@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { 
-  Home, MessageSquare, CheckSquare, Calendar as CalendarIcon, 
-  FileText, Folder, Briefcase, Wrench, Settings as SettingsIcon,
-  Mic, Bell, Moon, Sparkles, ChevronRight,
-  X, Menu, UserCheck, Eye
+  Home, MessageSquare, CheckSquare, 
+  FileText, Wrench, Settings as SettingsIcon,
+  Mic, Moon, Sparkles, ChevronRight,
+  X, Menu, UserCheck, Eye, Plus, Check, Trash2,
+  Database
 } from 'lucide-react';
 import type { EvaState } from '../../types/eva';
 import { AstraResponse } from './AstraResponse';
@@ -13,6 +14,7 @@ import { AstraOrb } from './AstraOrb';
 import { CameraWidget } from './AstraWidgets/CameraWidget';
 import { KnowledgeRAGWidget } from './AstraWidgets/KnowledgeRAGWidget';
 import { internetSearchService, type GoogleWeatherData } from '../../services/internetSearchService';
+import { supabaseService } from '../../services/supabaseClient';
 
 interface AstraDesktopInterfaceProps {
   state: EvaState;
@@ -23,6 +25,20 @@ interface AstraDesktopInterfaceProps {
   onStopSpeaking?: () => void;
   selectedModel: string;
   onSelectModel: (model: string) => void;
+}
+
+interface TaskItem {
+  id: string;
+  title: string;
+  completed: boolean;
+  priority: 'low' | 'medium' | 'high';
+}
+
+interface NoteItem {
+  id: string;
+  title: string;
+  content: string;
+  date: string;
 }
 
 export const AstraDesktopInterface: React.FC<AstraDesktopInterfaceProps> = ({
@@ -41,6 +57,27 @@ export const AstraDesktopInterface: React.FC<AstraDesktopInterfaceProps> = ({
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isRAGOpen, setIsRAGOpen] = useState(false);
   const [isOrbCanvasOpen, setIsOrbCanvasOpen] = useState(false);
+
+  // Modals for Top Level Interactive Workspace
+  const [isTasksOpen, setIsTasksOpen] = useState(false);
+  const [isNotesOpen, setIsNotesOpen] = useState(false);
+
+  // Dynamic Tasks State
+  const [tasks, setTasks] = useState<TaskItem[]>([
+    { id: '1', title: 'Review ASTRA Architecture & Supabase pgvector', completed: true, priority: 'high' },
+    { id: '2', title: 'Deploy Neural Voice Speech Pipeline', completed: true, priority: 'high' },
+    { id: '3', title: 'Test OS Computer Automation Bridge on Port 8990', completed: false, priority: 'medium' },
+    { id: '4', title: 'Compile Quantum RAG Document Embeddings', completed: false, priority: 'low' }
+  ]);
+  const [newTaskInput, setNewTaskInput] = useState('');
+
+  // Dynamic Notes State
+  const [notes, setNotes] = useState<NoteItem[]>([
+    { id: 'n-1', title: 'ASTRA Identity Directives', content: 'Sanskrit origin Astra [अस्त्र]: Intelligence, Precision, Power. Address Vivek as Boss naturally.', date: 'Today, 10:20 PM' },
+    { id: 'n-2', title: 'Supabase Cluster', content: 'Postgres 15 cluster connected: hzvsrqhfurghzkfdpxlt.supabase.co with pgvector vector(1536).', date: 'Today, 09:45 PM' }
+  ]);
+  const [newNoteTitle, setNewNoteTitle] = useState('');
+  const [newNoteContent, setNewNoteContent] = useState('');
 
   const [weather, setWeather] = useState<GoogleWeatherData | null>(null);
 
@@ -86,7 +123,7 @@ export const AstraDesktopInterface: React.FC<AstraDesktopInterfaceProps> = ({
         if (state === 'speaking') {
           const s1 = Math.sin(tick * 4 + i * 0.4);
           const s2 = Math.cos(tick * 6 + i * 0.2);
-          return (s1 + s2) * 26 * centerFactor;
+          return (s1 + s2) * 28 * centerFactor;
         } else if (state === 'thinking') {
           const s = Math.sin(tick * 7 + i * 0.5);
           return s * 22 * centerFactor;
@@ -95,7 +132,7 @@ export const AstraDesktopInterface: React.FC<AstraDesktopInterfaceProps> = ({
           return s * 16 * centerFactor;
         } else {
           const s = Math.sin(tick * 1.5 + i * 0.25);
-          return s * 7 * centerFactor;
+          return s * 8 * centerFactor;
         }
       });
 
@@ -112,6 +149,33 @@ export const AstraDesktopInterface: React.FC<AstraDesktopInterfaceProps> = ({
     if (!inputText.trim()) return;
     onSendPrompt(inputText.trim());
     setInputText('');
+  };
+
+  const handleAddTask = () => {
+    if (!newTaskInput.trim()) return;
+    const newTask: TaskItem = {
+      id: Date.now().toString(),
+      title: newTaskInput.trim(),
+      completed: false,
+      priority: 'medium'
+    };
+    setTasks(prev => [newTask, ...prev]);
+    setNewTaskInput('');
+    onSendPrompt(`Added task: ${newTask.title}`);
+  };
+
+  const handleAddNote = () => {
+    if (!newNoteTitle.trim()) return;
+    const newNote: NoteItem = {
+      id: Date.now().toString(),
+      title: newNoteTitle.trim(),
+      content: newNoteContent.trim() || 'No additional details.',
+      date: 'Just now'
+    };
+    setNotes(prev => [newNote, ...prev]);
+    setNewNoteTitle('');
+    setNewNoteContent('');
+    onSendPrompt(`Saved note: ${newNote.title}`);
   };
 
   const generateSvgPath = () => {
@@ -131,32 +195,31 @@ export const AstraDesktopInterface: React.FC<AstraDesktopInterfaceProps> = ({
   };
 
   const navItems = [
-    { name: 'Home', icon: Home },
-    { name: 'Chat with Astra', icon: MessageSquare },
-    { name: 'Tasks', icon: CheckSquare },
-    { name: 'Calendar', icon: CalendarIcon },
-    { name: 'Notes', icon: FileText },
-    { name: 'Files', icon: Folder },
-    { name: 'Projects', icon: Briefcase },
-    { name: 'Smart Tools', icon: Wrench },
-    { name: 'Settings', icon: SettingsIcon },
+    { name: 'Home', icon: Home, action: () => {} },
+    { name: 'Chat with Astra', icon: MessageSquare, action: () => onToggleVoice() },
+    { name: 'Tasks', icon: CheckSquare, action: () => setIsTasksOpen(true) },
+    { name: 'Notes', icon: FileText, action: () => setIsNotesOpen(true) },
+    { name: 'Smart RAG Vault', icon: Wrench, action: () => setIsRAGOpen(true) },
+    { name: 'Camera Vision', icon: Eye, action: () => setIsCameraOpen(true) },
+    { name: '3D Orb Focus', icon: Sparkles, action: () => setIsOrbCanvasOpen(true) },
+    { name: 'Settings & Cloud', icon: SettingsIcon, action: () => setIsSettingsOpen(true) },
   ];
 
   return (
     <div className="relative w-full h-screen bg-[#05030d] text-white font-sans overflow-hidden select-none">
       
-      {/* 1. UNZOOMED HARDWARE ACCELERATED SPACE NEBULA & MANDALA VIDEO BACKGROUND */}
+      {/* 1. HARDWARE ACCELERATED UNZOOMED SPACE MANDALA VIDEO */}
       <video
         ref={videoRef}
         autoPlay
         loop
         muted
         playsInline
-        className="absolute inset-0 w-full h-full object-cover object-center z-0 filter brightness-[0.68] contrast-[1.18] saturate-[1.15]"
+        className="absolute inset-0 w-full h-full object-cover object-center z-0 filter brightness-[0.70] contrast-[1.18] saturate-[1.15]"
         src="https://res.cloudinary.com/qia3rzqk/video/upload/v1786772058/VID-20260815-WA0003_gowuqn.mp4"
       />
 
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(5,3,13,0.1)_0%,rgba(5,3,13,0.5)_65%,rgba(5,3,13,0.88)_100%)] pointer-events-none z-10" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(5,3,13,0.08)_0%,rgba(5,3,13,0.45)_65%,rgba(5,3,13,0.85)_100%)] pointer-events-none z-10" />
 
       {/* 2. MASTER DESKTOP WRAPPER */}
       <div className="relative z-20 w-full h-full p-4 flex flex-col justify-between overflow-hidden">
@@ -183,14 +246,14 @@ export const AstraDesktopInterface: React.FC<AstraDesktopInterfaceProps> = ({
                 type="text"
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
-                placeholder="Ask Astra anything, Boss..."
+                placeholder="Ask Astra anything, Boss (e.g. 'Play song', 'Open VS Code', 'Weather')..."
                 className="flex-1 bg-transparent border-none outline-none text-xs text-white placeholder:text-white/40 font-sans tracking-wide"
               />
               <button
                 type="button"
                 onClick={onToggleVoice}
                 className={`p-1.5 rounded-full transition-all ${
-                  state === 'listening' || state === 'speaking' ? 'bg-amber-400 text-black animate-pulse' : 'text-white/60 hover:text-white'
+                  state === 'listening' || state === 'speaking' ? 'bg-amber-400 text-black animate-pulse shadow-[0_0_12px_rgba(245,158,11,0.8)]' : 'text-white/60 hover:text-white'
                 }`}
               >
                 <Mic className="w-4 h-4" />
@@ -217,13 +280,14 @@ export const AstraDesktopInterface: React.FC<AstraDesktopInterfaceProps> = ({
               </div>
             </div>
             <div className="h-6 w-px bg-white/15" />
-            <button onClick={() => setIsSettingsOpen(true)} className="text-white/60 hover:text-white">
-              <Bell className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-1 text-[10px] text-emerald-400 font-bold">
+              <Database className="w-3.5 h-3.5" />
+              <span>{supabaseService.isConnected ? 'Cloud OK' : 'Local'}</span>
+            </div>
           </div>
         </div>
 
-        {/* MAIN CENTERPIECE: CLEAN SCREEN REVEALING THE FULL ASTROLABE WHEEL & VOICE LINE */}
+        {/* MAIN CENTERPIECE: IMMERSIVE ASTROLABE WHEEL & VOICE LINE */}
         <main className="relative z-20 flex-1 flex flex-col items-center justify-center p-4">
           
           {/* Header Title & Glowing Yellow Waveform SVG */}
@@ -305,6 +369,129 @@ export const AstraDesktopInterface: React.FC<AstraDesktopInterfaceProps> = ({
             )}
           </AnimatePresence>
 
+          {/* Interactive Tasks Center Modal */}
+          <AnimatePresence>
+            {isTasksOpen && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-xl p-4"
+              >
+                <div className="w-full max-w-lg p-6 rounded-3xl bg-[#0e0a1f]/95 border border-amber-500/40 backdrop-blur-3xl shadow-2xl flex flex-col gap-4 font-sans">
+                  <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                    <div className="flex items-center gap-2">
+                      <CheckSquare className="w-5 h-5 text-amber-400" />
+                      <h3 className="font-bold text-white text-base">ASTRA TASKS CONTROL</h3>
+                    </div>
+                    <button onClick={() => setIsTasksOpen(false)} className="p-1 text-white/60 hover:text-white">
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  {/* Add Task Input */}
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={newTaskInput}
+                      onChange={(e) => setNewTaskInput(e.target.value)}
+                      placeholder="Add a new task..."
+                      onKeyDown={(e) => e.key === 'Enter' && handleAddTask()}
+                      className="flex-1 px-4 py-2 rounded-xl bg-black/40 border border-white/15 text-xs text-white outline-none placeholder:text-white/40"
+                    />
+                    <button
+                      onClick={handleAddTask}
+                      className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs flex items-center gap-1"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>Add</span>
+                    </button>
+                  </div>
+
+                  {/* Tasks List */}
+                  <div className="flex flex-col gap-2 max-h-64 overflow-y-auto pr-1">
+                    {tasks.map(t => (
+                      <div key={t.id} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/10 hover:border-white/20">
+                        <button
+                          onClick={() => setTasks(prev => prev.map(item => item.id === t.id ? { ...item, completed: !item.completed } : item))}
+                          className="flex items-center gap-3 text-left flex-1"
+                        >
+                          <div className={`w-4 h-4 rounded-md border flex items-center justify-center ${t.completed ? 'bg-emerald-500 border-emerald-400 text-black' : 'border-white/30'}`}>
+                            {t.completed && <Check className="w-3 h-3 stroke-[3]" />}
+                          </div>
+                          <span className={`text-xs ${t.completed ? 'line-through text-white/40' : 'text-white'}`}>{t.title}</span>
+                        </button>
+                        <button onClick={() => setTasks(prev => prev.filter(item => item.id !== t.id))} className="text-white/40 hover:text-rose-400">
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Interactive Notes Center Modal */}
+          <AnimatePresence>
+            {isNotesOpen && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.9 }}
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-xl p-4"
+              >
+                <div className="w-full max-w-lg p-6 rounded-3xl bg-[#0e0a1f]/95 border border-purple-500/40 backdrop-blur-3xl shadow-2xl flex flex-col gap-4 font-sans">
+                  <div className="flex items-center justify-between border-b border-white/10 pb-3">
+                    <div className="flex items-center gap-2">
+                      <FileText className="w-5 h-5 text-purple-400" />
+                      <h3 className="font-bold text-white text-base">ASTRA NOTES VAULT</h3>
+                    </div>
+                    <button onClick={() => setIsNotesOpen(false)} className="p-1 text-white/60 hover:text-white">
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <input
+                      type="text"
+                      value={newNoteTitle}
+                      onChange={(e) => setNewNoteTitle(e.target.value)}
+                      placeholder="Note Title..."
+                      className="px-4 py-2 rounded-xl bg-black/40 border border-white/15 text-xs text-white outline-none"
+                    />
+                    <textarea
+                      value={newNoteContent}
+                      onChange={(e) => setNewNoteContent(e.target.value)}
+                      placeholder="Write your note here..."
+                      rows={3}
+                      className="px-4 py-2 rounded-xl bg-black/40 border border-white/15 text-xs text-white outline-none resize-none"
+                    />
+                    <button
+                      onClick={handleAddNote}
+                      className="self-end px-4 py-2 rounded-xl bg-purple-500 hover:bg-purple-400 text-white font-bold text-xs flex items-center gap-1"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>Save Note</span>
+                    </button>
+                  </div>
+
+                  <div className="flex flex-col gap-2 max-h-56 overflow-y-auto pr-1">
+                    {notes.map(n => (
+                      <div key={n.id} className="p-3 rounded-xl bg-white/5 border border-white/10 flex flex-col gap-1">
+                        <div className="flex justify-between items-center">
+                          <h4 className="font-bold text-white text-xs">{n.title}</h4>
+                          <span className="text-[9px] text-white/40 font-mono">{n.date}</span>
+                        </div>
+                        <p className="text-[11px] text-white/70">{n.content}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
           {/* Interactive 3D Three.js Golden Mechanical Orb Canvas Overlay */}
           <AnimatePresence>
             {isOrbCanvasOpen && (
@@ -352,6 +539,15 @@ export const AstraDesktopInterface: React.FC<AstraDesktopInterfaceProps> = ({
             >
               <Sparkles className="w-4 h-4 animate-pulse text-amber-400" />
               <span>Press <span className="text-white font-extrabold">★</span> to talk to Astra</span>
+            </button>
+            <div className="h-4 w-px bg-white/15" />
+            <button
+              onClick={() => setIsTasksOpen(true)}
+              className="p-1 text-emerald-300 hover:text-emerald-200 flex items-center gap-1.5"
+              title="Open Tasks"
+            >
+              <CheckSquare className="w-4 h-4" />
+              <span>Tasks</span>
             </button>
             <div className="h-4 w-px bg-white/15" />
             <button
@@ -403,8 +599,7 @@ export const AstraDesktopInterface: React.FC<AstraDesktopInterfaceProps> = ({
                     key={item.name}
                     onClick={() => {
                       setActiveTab(item.name);
-                      if (item.name === 'Smart Tools') setIsRAGOpen(true);
-                      if (item.name === 'Settings') setIsSettingsOpen(true);
+                      item.action();
                       setIsSidebarOpen(false);
                     }}
                     className={`w-full px-3.5 py-2.5 rounded-2xl flex items-center justify-between transition-all ${
