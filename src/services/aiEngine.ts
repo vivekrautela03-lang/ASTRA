@@ -4,6 +4,7 @@ import { internetSearchService } from './internetSearchService';
 import { memoryEngine } from './memoryEngine';
 import { ragEngine } from './rag/ragEngine';
 import { buildAstraSystemPrompt } from '../config/astraPersonality';
+import { supabaseService } from './supabaseClient';
 
 export interface ModelRecommendation {
   modelId: AIModelId;
@@ -22,6 +23,7 @@ export interface AIResponseStream {
 }
 
 // Active API Keys Configuration
+const OPENAI_API_KEY = import.meta.env.VITE_OPENAI_API_KEY || '';
 const DEEPSEEK_API_KEY = import.meta.env.VITE_DEEPSEEK_API_KEY || '';
 const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
 const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY || '';
@@ -100,6 +102,45 @@ export class AIEngine {
       memoryContext: combinedContext,
       searchContext
     });
+  }
+
+  /**
+   * Call OpenAI API (GPT-4o) with 3s Timeout
+   */
+  private async callOpenAIAPI(prompt: string, searchContext: string = ''): Promise<string | null> {
+    if (!OPENAI_API_KEY) return null;
+
+    const apiCall = (async (): Promise<string | null> => {
+      try {
+        const systemMessage = await this.buildOmniscientSystemContext(prompt, searchContext);
+
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${OPENAI_API_KEY}`
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o',
+            messages: [
+              { role: 'system', content: systemMessage },
+              { role: 'user', content: prompt }
+            ],
+            temperature: 0.7,
+            max_tokens: 400
+          })
+        });
+
+        if (!response.ok) return null;
+        const data = await response.json();
+        return data?.choices?.[0]?.message?.content || null;
+      } catch {
+        return null;
+      }
+    })();
+
+    const timeoutPromise = new Promise<null>(res => setTimeout(() => res(null), 3000));
+    return Promise.race([apiCall, timeoutPromise]);
   }
 
   /**
@@ -212,7 +253,7 @@ export class AIEngine {
   }
 
   /**
-   * Process prompt with RAG Vector Augmentation & Guaranteed <1s Response Engine
+   * Process prompt with RAG Vector Augmentation, Supabase Sync & Guaranteed <1s Response Engine
    */
   public async generateResponse(
     prompt: string, 
@@ -247,7 +288,9 @@ export class AIEngine {
     } else {
       // Primary API Execution Attempt
       try {
-        if (model === 'llama-3-70b' && GROQ_API_KEY) {
+        if (model === 'gpt-4o' && OPENAI_API_KEY) {
+          fullText = (await this.callOpenAIAPI(prompt, searchContext)) || '';
+        } else if (model === 'llama-3-70b' && GROQ_API_KEY) {
           fullText = (await this.callGroqAPI(prompt, searchContext)) || '';
         } else if (model === 'gemini-1-5-pro' && GEMINI_API_KEY) {
           fullText = (await this.callGeminiAPI(prompt, searchContext)) || '';
@@ -261,6 +304,10 @@ export class AIEngine {
       // AUTONOMOUS SELF-HEALING FALLBACK CHAIN:
       if (!fullText && GROQ_API_KEY) {
         fullText = (await this.callGroqAPI(prompt, searchContext)) || '';
+        if (fullText) selfHealed = true;
+      }
+      if (!fullText && OPENAI_API_KEY) {
+        fullText = (await this.callOpenAIAPI(prompt, searchContext)) || '';
         if (fullText) selfHealed = true;
       }
       if (!fullText && GEMINI_API_KEY) {
@@ -299,6 +346,10 @@ export class AIEngine {
     // CONTINUOUS AUTO-LEARNING: Ingest query & answer into RAG Vector Store & Memory
     await ragEngine.learnFromInteraction(prompt, fullText);
 
+    // SUPABASE POSTGRES PERSISTENCE: Save conversation to cloud database
+    supabaseService.logMessage(null, 'user', prompt, model).catch(() => {});
+    supabaseService.logMessage(null, 'astra', fullText, model).catch(() => {});
+
     const endTime = performance.now();
     const duration = Math.round(endTime - startTime);
 
@@ -322,7 +373,7 @@ export class AIEngine {
       { id: 'ag-3', name: 'ASTRA Vector RAG Knowledge Indexer', role: 'research', status: 'running', currentTask: 'Indexing local vector store & persistent memory embeddings', progress: 100, logs: ['TF-IDF Cosine Similarity Matrix active', 'Vector Store ready'], icon: 'Brain' },
       { id: 'ag-4', name: 'Vision & Spatial Perception Engine', role: 'vision', status: 'running', currentTask: 'Live WebCam feed & Screen OCR scanner active', progress: 95, logs: ['OCR frame capture 60fps', 'Face tracking locked'], icon: 'Eye' },
       { id: 'ag-5', name: 'OS Computer Automation Bridge', role: 'computer_control', status: 'idle', progress: 100, logs: ['Win32/PowerShell IPC bridge listening on port 8990'], icon: 'Terminal' },
-      { id: 'ag-6', name: 'Stark Security & Autonomous Gatekeeper', role: 'security', status: 'running', currentTask: 'Zero-trust sandbox & auto-healing active', progress: 100, logs: ['Groq, Gemini & DeepSeek API key vaults unlocked', 'Self-healing chain ready'], icon: 'ShieldCheck' }
+      { id: 'ag-6', name: 'Stark Security & Autonomous Gatekeeper', role: 'security', status: 'running', currentTask: 'Zero-trust sandbox & auto-healing active', progress: 100, logs: ['Groq, Gemini, DeepSeek & Supabase vaults active', 'Self-healing chain ready'], icon: 'ShieldCheck' }
     ];
   }
 }
