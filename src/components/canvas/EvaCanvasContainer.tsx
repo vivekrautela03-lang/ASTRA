@@ -26,17 +26,17 @@ export const EvaCanvasContainer: React.FC<EvaCanvasContainerProps> = ({
           powerPreference: 'high-performance',
           stencil: false,
         }}
-        dpr={[1, 2]} // High-DPI support
+        dpr={[1, 2]}
       >
-        {/* Low-Intensity Ambient Lighting for Deep Space Shadow Contrast */}
-        <ambientLight intensity={0.25} color="#001122" />
+        {/* Warm Cinematic Ambient Lighting */}
+        <ambientLight intensity={0.6} color="#fbbf24" />
 
-        {/* Directional Sunlight Light Source Positioned Above / Front-Left casting crater rim shadows */}
-        <directionalLight position={[4.5, 5.0, 4.5]} intensity={2.4} color="#00e1ff" />
-        <directionalLight position={[-4.5, -3.0, -3.0]} intensity={0.6} color="#0033aa" />
-        <pointLight position={[0, 0, 4.5]} intensity={1.2} color="#00ffff" />
+        {/* Key Directional Golden Light Source */}
+        <directionalLight position={[4.5, 5.0, 4.5]} intensity={2.2} color="#f59e0b" />
+        <directionalLight position={[-4.5, -3.0, -3.0]} intensity={0.8} color="#b45309" />
+        <pointLight position={[0, 0, 4.5]} intensity={1.5} color="#fef08a" />
 
-        {/* 3D Orbit Controls — Allows User to Drag, Rotate, Pan & Zoom 3D Moon 360 Degrees */}
+        {/* 3D Orbit Controls */}
         <OrbitControls 
           enableZoom={true} 
           enablePan={true}
