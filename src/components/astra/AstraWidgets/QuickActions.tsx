@@ -1,5 +1,5 @@
 import React from 'react';
-import { Mic, Camera, CloudSun, Clock, Settings, Square } from 'lucide-react';
+import { Mic, Camera, CloudSun, Clock, Database, Settings, Square } from 'lucide-react';
 import type { EvaState } from '../../../types/eva';
 
 interface QuickActionsProps {
@@ -8,6 +8,7 @@ interface QuickActionsProps {
   onToggleCamera: () => void;
   onToggleWeather: () => void;
   onToggleTime: () => void;
+  onToggleRAG: () => void;
   onOpenSettings: () => void;
   onStopSpeaking?: () => void;
 }
@@ -18,6 +19,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
   onToggleCamera,
   onToggleWeather,
   onToggleTime,
+  onToggleRAG,
   onOpenSettings,
   onStopSpeaking
 }) => {
@@ -56,6 +58,15 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
         <Camera className="w-4 h-4 text-cyan-300" />
       </button>
 
+      {/* RAG Knowledge Store Action */}
+      <button
+        onClick={onToggleRAG}
+        className="p-3 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-white transition-all active:scale-95"
+        title="ASTRA Vector RAG Knowledge Base"
+      >
+        <Database className="w-4 h-4 text-purple-300" />
+      </button>
+
       {/* Weather Action */}
       <button
         onClick={onToggleWeather}
@@ -71,7 +82,7 @@ export const QuickActions: React.FC<QuickActionsProps> = ({
         className="p-3 rounded-full bg-white/10 hover:bg-white/20 border border-white/15 text-white transition-all active:scale-95"
         title="Time & Date Widget"
       >
-        <Clock className="w-4 h-4 text-purple-300" />
+        <Clock className="w-4 h-4 text-cyan-300" />
       </button>
 
       {/* Settings Action */}

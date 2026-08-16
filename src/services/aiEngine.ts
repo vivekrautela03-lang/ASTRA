@@ -2,6 +2,7 @@ import type { AIModelId, AgentRole, AIAgent } from '../types/eva';
 import { voiceVisionEngine } from './voiceVisionEngine';
 import { internetSearchService } from './internetSearchService';
 import { memoryEngine } from './memoryEngine';
+import { ragEngine } from './rag/ragEngine';
 import { buildAstraSystemPrompt } from '../config/astraPersonality';
 
 export interface ModelRecommendation {
@@ -17,6 +18,7 @@ export interface AIResponseStream {
   executionTimeMs: number;
   tokensPerSec: number;
   selfHealed?: boolean;
+  ragAugmented?: boolean;
 }
 
 // Active API Keys Configuration
@@ -57,7 +59,7 @@ export class AIEngine {
   /**
    * Fast Synthesizer for ASTRA's Core Persona & System Context Matrix
    */
-  private async buildOmniscientSystemContext(searchContext: string = ''): Promise<string> {
+  private async buildOmniscientSystemContext(prompt: string, searchContext: string = ''): Promise<string> {
     const memories = memoryEngine.getMemories().slice(0, 3).map(m => `- ${m.content}`).join('\n');
     
     let locationStr = 'Current Workstation';
@@ -84,11 +86,18 @@ export class AIEngine {
       // Immediate fallback
     }
 
+    // Retrieve RAG Context for Prompt
+    const ragRes = await ragEngine.retrieveAndAugment(prompt);
+    const combinedContext = [
+      memories,
+      ragRes.hasRetrievedKnowledge ? ragRes.contextPromptBlock : ''
+    ].filter(Boolean).join('\n\n');
+
     return buildAstraSystemPrompt({
       location: locationStr,
       weather: weatherStr,
       timeDate: new Date().toLocaleString(),
-      memoryContext: memories,
+      memoryContext: combinedContext,
       searchContext
     });
   }
@@ -101,7 +110,7 @@ export class AIEngine {
 
     const apiCall = (async (): Promise<string | null> => {
       try {
-        const systemMessage = await this.buildOmniscientSystemContext(searchContext);
+        const systemMessage = await this.buildOmniscientSystemContext(prompt, searchContext);
 
         const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
           method: 'POST',
@@ -140,7 +149,7 @@ export class AIEngine {
 
     const apiCall = (async (): Promise<string | null> => {
       try {
-        const systemInstruction = await this.buildOmniscientSystemContext(searchContext);
+        const systemInstruction = await this.buildOmniscientSystemContext(prompt, searchContext);
         const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
         const response = await fetch(url, {
           method: 'POST',
@@ -171,7 +180,7 @@ export class AIEngine {
 
     const apiCall = (async (): Promise<string | null> => {
       try {
-        const systemMessage = await this.buildOmniscientSystemContext(searchContext);
+        const systemMessage = await this.buildOmniscientSystemContext(prompt, searchContext);
 
         const response = await fetch('https://api.deepseek.com/chat/completions', {
           method: 'POST',
@@ -203,7 +212,7 @@ export class AIEngine {
   }
 
   /**
-   * Process prompt with Omniscient Context Fusion & Guaranteed <1s Response Engine
+   * Process prompt with RAG Vector Augmentation & Guaranteed <1s Response Engine
    */
   public async generateResponse(
     prompt: string, 
@@ -218,7 +227,10 @@ export class AIEngine {
     let selfHealed = false;
     const lower = prompt.toLowerCase().trim();
 
-    // 1. Automatic Internet Search Trigger
+    // 1. Check RAG Retrieval
+    const ragRes = await ragEngine.retrieveAndAugment(prompt);
+
+    // 2. Automatic Internet Search Trigger
     let searchContext = '';
     if (internetSearchService.needsWebSearch(prompt)) {
       try {
@@ -229,7 +241,7 @@ export class AIEngine {
       }
     }
 
-    // 2. Direct simple greetings
+    // 3. Direct simple greetings
     if (lower === 'hi' || lower === 'hello' || lower === 'hey' || lower === 'astra' || lower === 'namaste') {
       fullText = voiceVisionEngine.getGreeting();
     } else {
@@ -260,10 +272,12 @@ export class AIEngine {
         if (fullText) selfHealed = true;
       }
 
-      // Guaranteed Self-Enhancing Neural Response Fallback (Zero Failure Guarantee)
+      // Guaranteed Self-Enhancing Neural Response Fallback
       if (!fullText) {
         selfHealed = true;
-        if (searchContext) {
+        if (ragRes.hasRetrievedKnowledge && ragRes.searchResults.length > 0) {
+          fullText = `Yes, Boss. Retrieved knowledge from vector store (${ragRes.citationSummary}): "${ragRes.searchResults[0].snippet}"`;
+        } else if (searchContext) {
           fullText = `Yes, Boss. I checked the search results for you. Summary: ${searchContext.substring(0, 250)}...`;
         } else if (lower.includes('code') || lower.includes('script') || lower.includes('build') || lower.includes('app')) {
           fullText = `On it, Boss. Generated the workspace script for you:\n\n\`\`\`typescript\n// ASTRA Precision Script\nexport async function executeAstraTask(taskName: string) {\n  console.log(\`[ASTRA] Executing task: \${taskName}...\`);\n  return { status: 'SUCCESS', precision: 'HIGH' };\n}\n\`\`\``;
@@ -290,7 +304,8 @@ export class AIEngine {
       modelUsed: model,
       executionTimeMs: duration,
       tokensPerSec: Math.round((fullText.length / 4) / (duration / 1000 || 1)),
-      selfHealed
+      selfHealed,
+      ragAugmented: ragRes.hasRetrievedKnowledge
     };
   }
 
@@ -301,7 +316,7 @@ export class AIEngine {
     return [
       { id: 'ag-1', name: 'ASTRA Neural Code Synthesizer & Self-Healer', role: 'coding', status: 'idle', progress: 100, logs: ['AST auto-repair active', 'Self-diagnostic sentinel online'], icon: 'Code' },
       { id: 'ag-2', name: 'Autonomous Web Browser Agent', role: 'browser', status: 'running', currentTask: 'Monitoring live news & finance APIs', progress: 88, logs: ['Crawling stock tickers', 'Indexing tech updates'], icon: 'Globe' },
-      { id: 'ag-3', name: 'Stark Deep Knowledge RAG Agent', role: 'research', status: 'idle', progress: 100, logs: ['Vector db synced (14,290 embeddings)'], icon: 'Brain' },
+      { id: 'ag-3', name: 'ASTRA Vector RAG Knowledge Indexer', role: 'research', status: 'running', currentTask: 'Indexing local vector store & persistent memory embeddings', progress: 100, logs: ['TF-IDF Cosine Similarity Matrix active', 'Vector Store ready'], icon: 'Brain' },
       { id: 'ag-4', name: 'Vision & Spatial Perception Engine', role: 'vision', status: 'running', currentTask: 'Live WebCam feed & Screen OCR scanner active', progress: 95, logs: ['OCR frame capture 60fps', 'Face tracking locked'], icon: 'Eye' },
       { id: 'ag-5', name: 'OS Computer Automation Bridge', role: 'computer_control', status: 'idle', progress: 100, logs: ['Win32/PowerShell IPC bridge listening on port 8990'], icon: 'Terminal' },
       { id: 'ag-6', name: 'Stark Security & Autonomous Gatekeeper', role: 'security', status: 'running', currentTask: 'Zero-trust sandbox & auto-healing active', progress: 100, logs: ['Groq, Gemini & DeepSeek API key vaults unlocked', 'Self-healing chain ready'], icon: 'ShieldCheck' }

@@ -2,13 +2,14 @@ import { weatherTool } from './WeatherTool';
 import { timeDateTool } from './TimeDateTool';
 import { specialDayTool } from './SpecialDayTool';
 import { cameraTool } from './CameraTool';
+import { ragTool } from './RAGTool';
 import { internetSearchService } from '../internetSearchService';
 
 export interface ToolExecutionResult {
   executed: boolean;
   toolName?: string;
   resultSummary?: string;
-  actionRequested?: 'open_camera' | 'close_camera' | 'show_weather' | 'show_time' | 'hide_all';
+  actionRequested?: 'open_camera' | 'close_camera' | 'show_weather' | 'show_time' | 'hide_all' | 'open_rag';
 }
 
 export class ToolRegistry {
@@ -37,7 +38,19 @@ export class ToolRegistry {
       };
     }
 
-    // 2. Weather Tool Directives
+    // 2. RAG Knowledge Search Directives
+    if (lower.includes('search knowledge') || lower.includes('search document') || lower.includes('search rag') || lower.includes('vector search')) {
+      const query = prompt.replace(/search knowledge|search document|search rag|vector search/gi, '').trim() || 'ASTRA';
+      const summary = await ragTool.search(query);
+      return {
+        executed: true,
+        toolName: 'RAGTool',
+        resultSummary: summary,
+        actionRequested: 'open_rag'
+      };
+    }
+
+    // 3. Weather Tool Directives
     if (lower.includes('weather') || lower.includes('temperature') || lower.includes('forecast') || lower.includes('how hot') || lower.includes('is it raining')) {
       const weatherRes = await weatherTool.execute();
       return {
@@ -48,7 +61,7 @@ export class ToolRegistry {
       };
     }
 
-    // 3. Time & Date Tool Directives
+    // 4. Time & Date Tool Directives
     if (lower.includes('what time is it') || lower.includes('current time') || lower.includes('clock') || lower.includes('show time')) {
       const summary = timeDateTool.execute('time');
       return {
@@ -75,7 +88,7 @@ export class ToolRegistry {
       };
     }
 
-    // 4. Special Day Tool Directives
+    // 5. Special Day Tool Directives
     if (lower.includes('special day') || lower.includes('festival') || lower.includes('holiday') || lower.includes('event today')) {
       const summary = specialDayTool.execute();
       return {
@@ -85,7 +98,7 @@ export class ToolRegistry {
       };
     }
 
-    // 5. General UI Directives
+    // 6. General UI Directives
     if (lower.includes('hide everything') || lower.includes('minimize widgets') || lower.includes('clear screen')) {
       return {
         executed: true,
@@ -95,7 +108,7 @@ export class ToolRegistry {
       };
     }
 
-    // 6. Web Search Trigger
+    // 7. Web Search Trigger
     if (internetSearchService.needsWebSearch(prompt)) {
       const searchRes = await internetSearchService.searchWeb(prompt);
       return {

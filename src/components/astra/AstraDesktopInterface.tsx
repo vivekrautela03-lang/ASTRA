@@ -7,6 +7,7 @@ import { WeatherWidget } from './AstraWidgets/WeatherWidget';
 import { TimeWidget } from './AstraWidgets/TimeWidget';
 import { SpecialDayWidget } from './AstraWidgets/SpecialDayWidget';
 import { CameraWidget } from './AstraWidgets/CameraWidget';
+import { KnowledgeRAGWidget } from './AstraWidgets/KnowledgeRAGWidget';
 import { QuickActions } from './AstraWidgets/QuickActions';
 import { AstraSettings } from './AstraSettings';
 
@@ -34,6 +35,7 @@ export const AstraDesktopInterface: React.FC<AstraDesktopInterfaceProps> = ({
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isWeatherVisible, setIsWeatherVisible] = useState(true);
   const [isTimeVisible, setIsTimeVisible] = useState(true);
+  const [isRAGVisible, setIsRAGVisible] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   // Dynamic Yellow Glowing Voice Line Path State
@@ -113,7 +115,7 @@ export const AstraDesktopInterface: React.FC<AstraDesktopInterfaceProps> = ({
 
       <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(0,0,0,0.15)_0%,rgba(0,0,0,0.55)_65%,rgba(0,0,0,0.90)_100%)] pointer-events-none z-10" />
 
-      {/* 2. TOP BRANDING & YELLOW GLOWING VOICE LINE (MATCHING EXACT USER SCREENSHOT DESIGN) */}
+      {/* 2. TOP BRANDING & YELLOW GLOWING VOICE LINE */}
       <header className="relative z-30 w-full flex flex-col items-center pt-8 px-4 pointer-events-auto select-none">
         {/* ASTRA Title */}
         <h1 className="text-4xl md:text-6xl font-light tracking-[0.38em] text-white font-sans uppercase drop-shadow-[0_4px_30px_rgba(255,255,255,0.6)]">
@@ -178,6 +180,11 @@ export const AstraDesktopInterface: React.FC<AstraDesktopInterfaceProps> = ({
             <TimeWidget />
           </motion.div>
         )}
+        {isRAGVisible && (
+          <motion.div initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }}>
+            <KnowledgeRAGWidget />
+          </motion.div>
+        )}
       </div>
 
       <div className="absolute top-16 right-6 z-30 pointer-events-auto flex flex-col gap-3 items-end">
@@ -200,7 +207,7 @@ export const AstraDesktopInterface: React.FC<AstraDesktopInterfaceProps> = ({
         </AnimatePresence>
       </div>
 
-      {/* 4. MAIN CENTERPIECE: CLEAN SCREEN REVEALING THE BACKGROUND VIDEO WHEEL (3D MODEL REMOVED) */}
+      {/* 4. MAIN CENTERPIECE: CLEAN SCREEN REVEALING THE BACKGROUND VIDEO WHEEL */}
       <main className="relative z-20 flex-1 flex flex-col items-center justify-center p-4">
         {/* Live Speech Response Panel */}
         <AstraResponse
@@ -219,6 +226,7 @@ export const AstraDesktopInterface: React.FC<AstraDesktopInterfaceProps> = ({
           onToggleCamera={() => setIsCameraOpen(!isCameraOpen)}
           onToggleWeather={() => setIsWeatherVisible(!isWeatherVisible)}
           onToggleTime={() => setIsTimeVisible(!isTimeVisible)}
+          onToggleRAG={() => setIsRAGVisible(!isRAGVisible)}
           onOpenSettings={() => setIsSettingsOpen(true)}
           onStopSpeaking={onStopSpeaking}
         />
