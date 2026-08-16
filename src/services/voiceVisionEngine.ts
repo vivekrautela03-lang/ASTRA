@@ -8,6 +8,8 @@ export class VoiceVisionEngine {
   private recognition: any = null;
   private wakeWordRecognition: any = null;
   private silenceTimer: any = null;
+  private lastProcessedTranscript: string = '';
+  private lastProcessedTime: number = 0;
 
   constructor() {
     if (typeof window !== 'undefined') {
@@ -44,7 +46,7 @@ export class VoiceVisionEngine {
     } else if (hour >= 17 || hour < 4) {
       timeGreeting = 'Good evening';
     }
-    return `${timeGreeting}, Vivek! ASTRA here. Ready to assist you with coding, research, writing, or planning today. How can I help?`;
+    return `${timeGreeting}, Vivek! ASTRA online and listening. I will respond to every single question you ask. How can I help you right now?`;
   }
 
   /**
@@ -121,7 +123,7 @@ export class VoiceVisionEngine {
   }
 
   /**
-   * Continuous Speech Recognition Listener
+   * Continuous Speech Recognition Listener with Guaranteed Response Trigger
    */
   public startListening(onResult: (transcript: string, isFinal: boolean) => void): void {
     if (!this.recognition) {
@@ -131,7 +133,6 @@ export class VoiceVisionEngine {
 
     try {
       this.stopWakeWordListener();
-      this.stopSpeaking();
       jarvisSoundEngine.playHologramActivation();
       this.listeningActive = true;
 
@@ -147,25 +148,49 @@ export class VoiceVisionEngine {
           }
         }
 
-        if (final) {
-          onResult(final, true);
-        } else if (interim) {
-          onResult(interim, false);
+        const now = Date.now();
+
+        if (final.trim()) {
+          const cleanFinal = final.trim();
+          if (this.silenceTimer) clearTimeout(this.silenceTimer);
+          
+          // Deduplicate if identical transcript within 1.5s
+          if (cleanFinal !== this.lastProcessedTranscript || now - this.lastProcessedTime > 1500) {
+            this.lastProcessedTranscript = cleanFinal;
+            this.lastProcessedTime = now;
+            onResult(cleanFinal, true);
+          }
+        } else if (interim.trim()) {
+          const cleanInterim = interim.trim();
+          onResult(cleanInterim, false);
+          
           if (this.silenceTimer) clearTimeout(this.silenceTimer);
           this.silenceTimer = setTimeout(() => {
-            onResult(interim, true);
-          }, 1800);
+            if (cleanInterim !== this.lastProcessedTranscript || now - this.lastProcessedTime > 1500) {
+              this.lastProcessedTranscript = cleanInterim;
+              this.lastProcessedTime = Date.now();
+              onResult(cleanInterim, true);
+            }
+          }, 1200);
         }
       };
 
       this.recognition.onerror = (event: any) => {
         console.warn('[ASTRA STT Error]:', event.error);
-        this.listeningActive = false;
+        if (event.error !== 'aborted') {
+          setTimeout(() => {
+            if (this.listeningActive) {
+              try { this.recognition.start(); } catch { /* Restart safely */ }
+            }
+          }, 400);
+        }
       };
 
       this.recognition.onend = () => {
         if (this.listeningActive) {
-          try { this.recognition.start(); } catch { /* Ignore restart errors */ }
+          setTimeout(() => {
+            try { this.recognition.start(); } catch { /* Restart safely */ }
+          }, 200);
         }
       };
 
