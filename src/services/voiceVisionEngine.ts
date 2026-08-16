@@ -46,7 +46,22 @@ export class VoiceVisionEngine {
     } else if (hour >= 17 || hour < 4) {
       timeGreeting = 'Good evening';
     }
-    return `${timeGreeting}, Vivek! ASTRA online and listening. I will respond to every single question you ask. How can I help you right now?`;
+    return `Hmm, ${timeGreeting}, Vivek! Haan sun raha hu. Ask me any question, I will respond to every single one!`;
+  }
+
+  /**
+   * Speak a quick, natural human backchannel acknowledgement ("Hmm", "Achha", "Sun raha hu")
+   */
+  public speakQuickAcknowledgement(): void {
+    const acknowledgements = [
+      'Hmm, achha...',
+      'Haan Vivek, sun raha hu...',
+      'Hmm, ok tell me...',
+      'Achha, got it...',
+      'Hmm, haan...'
+    ];
+    const phrase = acknowledgements[Math.floor(Math.random() * acknowledgements.length)];
+    this.speak(phrase, 'bilingual');
   }
 
   /**
@@ -83,21 +98,23 @@ export class VoiceVisionEngine {
 
     const utterance = new SpeechSynthesisUtterance(cleanText);
     utterance.rate = 1.0;
-    utterance.pitch = 1.05; // Articulate, calm, natural human pitch
+    utterance.pitch = 1.02; // Articulate, calm, natural human pitch
     utterance.volume = 1.0;
 
     const voices = this.synth.getVoices();
-    // Select premium articulate voice (Google US/UK, Samantha, Victoria, Zira, Karen)
-    const femaleVoice = voices.find(v => 
-      (v.name.includes('Google') && (v.name.includes('UK') || v.name.includes('US'))) ||
+    // Select premium ultra-clear natural voice (Google Natural, Microsoft Natural, Google US/UK, Samantha, Victoria, Zira)
+    const premiumVoice = voices.find(v => 
+      v.name.includes('Natural') ||
+      (v.name.includes('Google') && (v.name.includes('UK') || v.name.includes('US') || v.name.includes('English'))) ||
       v.name.includes('Samantha') || 
       v.name.includes('Victoria') || 
       v.name.includes('Zira') || 
-      v.name.includes('Karen')
-    ) || voices.find(v => v.lang.startsWith('en')) || voices[0];
+      v.name.includes('Karen') ||
+      v.name.includes('Google हिन्दी')
+    ) || voices.find(v => v.lang.startsWith('en') || v.lang.startsWith('hi')) || voices[0];
 
-    if (femaleVoice) {
-      utterance.voice = femaleVoice;
+    if (premiumVoice) {
+      utterance.voice = premiumVoice;
     }
 
     utterance.onend = () => {
@@ -154,7 +171,6 @@ export class VoiceVisionEngine {
           const cleanFinal = final.trim();
           if (this.silenceTimer) clearTimeout(this.silenceTimer);
           
-          // Deduplicate if identical transcript within 1.5s
           if (cleanFinal !== this.lastProcessedTranscript || now - this.lastProcessedTime > 1500) {
             this.lastProcessedTranscript = cleanFinal;
             this.lastProcessedTime = now;
