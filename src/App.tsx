@@ -16,7 +16,7 @@ export const App: React.FC = () => {
   // Global ASTRA state: idle | listening | thinking | speaking
   const [state, setState] = useState<EvaState>('idle');
   const [lastResponseText, setLastResponseText] = useState<string>(
-    "ASTRA OS v9.0 Quantum Active. Ready for your command, Boss."
+    "ASTRA OS v9.0 Quantum Active. Ready to search, play, open, read, or write on any app, Boss."
   );
 
   // Core settings state
@@ -135,7 +135,7 @@ export const App: React.FC = () => {
       return;
     }
 
-    // 3. Play Song / Music Directive
+    // 3. Play Song / Music Directive (YouTube & Local Automation)
     if (lower.startsWith('play ') || lower.startsWith('play song ')) {
       const songQuery = lower.replace('play song ', '').replace('play ', '');
       const ackText = `Playing "${songQuery}" for you on YouTube, Boss.`;
@@ -159,7 +159,88 @@ export const App: React.FC = () => {
       return;
     }
 
-    // 4. Evaluate Tool Registry for tool execution (Weather, Time, Special Day, Camera, Search)
+    // 4. Read File Directive ("read file X" or "read X.txt")
+    if (lower.startsWith('read file ') || (lower.startsWith('read ') && (lower.includes('.txt') || lower.includes('.md') || lower.includes('.json') || lower.includes('.ts') || lower.includes('.js')))) {
+      const pathTarget = promptText.replace(/read file /i, '').replace(/read /i, '').trim();
+      const fileRes = await automationBridge.readFile(pathTarget);
+
+      let ackText = '';
+      if (fileRes.success && fileRes.content) {
+        ackText = `Read "${pathTarget}" successfully, Boss. Content: "${fileRes.content.slice(0, 300)}${fileRes.content.length > 300 ? '...' : ''}"`;
+      } else {
+        ackText = `Could not read file "${pathTarget}". ${fileRes.message || 'File not found.'}`;
+      }
+
+      setLastResponseText(ackText);
+      setState('speaking');
+      if (settings.soundEnabled) {
+        textToSpeechService.speak(ackText, () => {
+          isProcessingRef.current = false;
+          setState('idle');
+          armWakeWordListener();
+        });
+      }
+      return;
+    }
+
+    // 5. Write to File Directive ("write to file X ..." or "save file X with content ...")
+    if (lower.startsWith('write to file ') || lower.startsWith('save file ') || lower.startsWith('create file ')) {
+      const parts = promptText.split(/ content | with content | :/i);
+      const filePath = parts[0].replace(/write to file |save file |create file /i, '').trim();
+      const content = parts[1] || 'Created by ASTRA AI Assistant';
+
+      const writeRes = await automationBridge.writeFile(filePath, content);
+      const ackText = writeRes.success 
+        ? `Successfully written ${writeRes.bytesWritten} characters to file "${filePath}", Boss.` 
+        : `Could not write to file "${filePath}". ${writeRes.message}`;
+
+      setLastResponseText(ackText);
+      setState('speaking');
+      if (settings.soundEnabled) {
+        textToSpeechService.speak(ackText, () => {
+          isProcessingRef.current = false;
+          setState('idle');
+          armWakeWordListener();
+        });
+      }
+      return;
+    }
+
+    // 6. Type / Paste into Active App Window ("type ..." or "write in app ...")
+    if (lower.startsWith('type ') || lower.startsWith('write in app ') || lower.startsWith('paste ')) {
+      const textToType = promptText.replace(/type |write in app |paste /i, '').trim();
+      await automationBridge.typeIntoActiveApp(textToType);
+      const ackText = `Typed "${textToType}" into your active application window, Boss.`;
+
+      setLastResponseText(ackText);
+      setState('speaking');
+      if (settings.soundEnabled) {
+        textToSpeechService.speak(ackText, () => {
+          isProcessingRef.current = false;
+          setState('idle');
+          armWakeWordListener();
+        });
+      }
+      return;
+    }
+
+    // 7. Clipboard Read/Write Directives
+    if (lower.includes('read clipboard') || lower.includes('what is in my clipboard') || lower.includes("what's in my clipboard")) {
+      const clipText = await automationBridge.readClipboard();
+      const ackText = clipText ? `Your clipboard contains: "${clipText.slice(0, 200)}"` : 'Your clipboard is currently empty, Boss.';
+      setLastResponseText(ackText);
+      setState('speaking');
+      if (settings.soundEnabled) {
+        textToSpeechService.speak(ackText, () => {
+          isProcessingRef.current = false;
+          setState('idle');
+          armWakeWordListener();
+        });
+      }
+      return;
+    }
+
+    // 8. Evaluate Tool Registry for tool execution (Weather, Time, Camera, Web Search)
     const toolResult = await toolRegistry.evaluateAndExecute(promptText);
 
     if (toolResult.executed && toolResult.resultSummary) {
@@ -181,7 +262,7 @@ export const App: React.FC = () => {
       return;
     }
 
-    // 5. Camera vision / object recognition direct directives
+    // 9. Camera vision / object recognition direct directives
     if (lower.includes('camera') || lower.includes('holding') || lower.includes('surroundings') || lower.includes('what am i holding') || lower.includes('check environment')) {
       setState('thinking');
       setLastResponseText("Opening camera vision feed and scanning surroundings for you, Boss...");
@@ -206,7 +287,7 @@ export const App: React.FC = () => {
       return;
     }
 
-    // 6. Universal App Opening directive handler
+    // 10. Universal App Opening directive handler
     if (lower.startsWith('open ') || lower.startsWith('launch ')) {
       const targetApp = lower.replace('open ', '').replace('launch ', '');
       const result = automationBridge.launchApplication(targetApp);
@@ -231,7 +312,7 @@ export const App: React.FC = () => {
       return;
     }
 
-    // 7. Visual processing status
+    // 11. Visual processing status & Neural AI Reasoning
     setState('thinking');
     setLastResponseText(`ASTRA thinking: "${promptText}"...`);
 
@@ -242,14 +323,14 @@ export const App: React.FC = () => {
       setSettings((prev: SystemSettings) => ({ ...prev, selectedModel: chosenModel }));
     }
 
-    // 8. Generate response from Live Multi-API Engine with progressive streaming text
+    // 12. Generate response from Live Multi-API Engine with progressive streaming text
     const res = await aiEngine.generateResponse(promptText, chosenModel, (chunk) => {
       setLastResponseText(chunk);
     });
     
     memoryEngine.addMemory(`User: ${promptText} | ASTRA: ${res.text.substring(0, 150)}...`, 'conversation', ['q-and-a']);
 
-    // 9. Speak response out loud & drain prompt queue for next question
+    // 13. Speak response out loud & drain prompt queue for next question
     setLastResponseText(res.text);
     setState('speaking');
 

@@ -102,6 +102,64 @@ export class AutomationBridgeService {
   }
 
   /**
+   * Read any local file on PC
+   */
+  public async readFile(filePath: string): Promise<{ success: boolean; content?: string; message?: string }> {
+    try {
+      const res = await fetch(`${this.backendUrl}/api/automate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'read_file', filePath })
+      });
+      const data = await res.json();
+      if (res.ok && data.status === 'SUCCESS') {
+        return { success: true, content: data.content };
+      }
+      return { success: false, message: data.message || 'Failed to read file' };
+    } catch (err: unknown) {
+      return { success: false, message: err instanceof Error ? err.message : 'Backend unreachable' };
+    }
+  }
+
+  /**
+   * Write text or code to any local file on PC
+   */
+  public async writeFile(filePath: string, content: string): Promise<{ success: boolean; bytesWritten?: number; message?: string }> {
+    try {
+      const res = await fetch(`${this.backendUrl}/api/automate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'write_file', filePath, content })
+      });
+      const data = await res.json();
+      if (res.ok && data.status === 'SUCCESS') {
+        supabaseService.logSystemEvent('FILE_WRITE', { filePath, length: content.length }).catch(() => {});
+        return { success: true, bytesWritten: data.bytesWritten };
+      }
+      return { success: false, message: data.message || 'Failed to write file' };
+    } catch (err: unknown) {
+      return { success: false, message: err instanceof Error ? err.message : 'Backend unreachable' };
+    }
+  }
+
+  /**
+   * Type or paste text into the active foreground window
+   */
+  public async typeIntoActiveApp(content: string): Promise<{ success: boolean; message?: string }> {
+    try {
+      const res = await fetch(`${this.backendUrl}/api/automate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'type_text', content })
+      });
+      const data = await res.json();
+      return { success: data.status === 'SUCCESS', message: data.message };
+    } catch (err: unknown) {
+      return { success: false, message: err instanceof Error ? err.message : 'Backend unreachable' };
+    }
+  }
+
+  /**
    * Search song on YouTube
    */
   public async searchSong(query: string, provider: string = 'youtube') {
