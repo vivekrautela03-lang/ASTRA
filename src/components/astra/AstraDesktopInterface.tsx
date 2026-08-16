@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Send } from 'lucide-react';
 import type { EvaState } from '../../types/eva';
-import { AstraOrb } from './AstraOrb';
 import { AstraResponse } from './AstraResponse';
 import { WeatherWidget } from './AstraWidgets/WeatherWidget';
 import { TimeWidget } from './AstraWidgets/TimeWidget';
@@ -201,18 +200,14 @@ export const AstraDesktopInterface: React.FC<AstraDesktopInterfaceProps> = ({
         </AnimatePresence>
       </div>
 
-      {/* 4. MAIN CENTERPIECE: GOLDEN MECHANICAL ASTRA ORB (CLEAN WITHOUT THE MIDDLE STATUS PILL BOX) */}
+      {/* 4. MAIN CENTERPIECE: CLEAN SCREEN REVEALING THE BACKGROUND VIDEO WHEEL (3D MODEL REMOVED) */}
       <main className="relative z-20 flex-1 flex flex-col items-center justify-center p-4">
-        <AstraOrb state={state} onOrbClick={onToggleVoice} showStatusPill={false} />
-
         {/* Live Speech Response Panel */}
-        <div className="mt-4">
-          <AstraResponse
-            state={state}
-            responseText={lastResponseText}
-            onStopSpeaking={onStopSpeaking}
-          />
-        </div>
+        <AstraResponse
+          state={state}
+          responseText={lastResponseText}
+          onStopSpeaking={onStopSpeaking}
+        />
       </main>
 
       {/* 5. BOTTOM DESKTOP FOOTER (QUICK ACTIONS & INPUT FORM) */}
