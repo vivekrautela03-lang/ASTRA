@@ -296,6 +296,9 @@ export class AIEngine {
       await new Promise(res => setTimeout(res, 10));
     }
 
+    // CONTINUOUS AUTO-LEARNING: Ingest query & answer into RAG Vector Store & Memory
+    await ragEngine.learnFromInteraction(prompt, fullText);
+
     const endTime = performance.now();
     const duration = Math.round(endTime - startTime);
 
