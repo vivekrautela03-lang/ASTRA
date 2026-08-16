@@ -3,9 +3,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { 
   Home, MessageSquare, CheckSquare, Calendar as CalendarIcon, 
   FileText, Folder, Briefcase, Wrench, Settings as SettingsIcon,
-  Mic, Bell, Moon, Sun, Sparkles, ChevronRight,
-  FileCode, Layers, Scissors, Globe, ImageIcon,
-  X, Activity, Cpu, HardDrive, Wifi, Menu, UserCheck
+  Mic, Bell, Moon, Sparkles, ChevronRight,
+  X, Menu, UserCheck, Eye
 } from 'lucide-react';
 import type { EvaState } from '../../types/eva';
 import { AstraResponse } from './AstraResponse';
@@ -13,7 +12,6 @@ import { AstraSettings } from './AstraSettings';
 import { AstraOrb } from './AstraOrb';
 import { CameraWidget } from './AstraWidgets/CameraWidget';
 import { KnowledgeRAGWidget } from './AstraWidgets/KnowledgeRAGWidget';
-import { vectorStoreService } from '../../services/rag/vectorStore';
 import { internetSearchService, type GoogleWeatherData } from '../../services/internetSearchService';
 
 interface AstraDesktopInterfaceProps {
@@ -45,31 +43,23 @@ export const AstraDesktopInterface: React.FC<AstraDesktopInterfaceProps> = ({
   const [isOrbCanvasOpen, setIsOrbCanvasOpen] = useState(false);
 
   const [weather, setWeather] = useState<GoogleWeatherData | null>(null);
-  const [ragDocsCount, setRagDocsCount] = useState(vectorStoreService.getAllDocuments().length);
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const [currentTime, setCurrentTime] = useState('10:42 PM');
   const [currentDateStr, setCurrentDateStr] = useState('Friday, 16 May');
-  const [greetingTitle, setGreetingTitle] = useState('Good Evening, Vivek! 👋');
 
   // Dynamic Yellow Glowing Voice Line Path State
   const [wavePoints, setWavePoints] = useState<number[]>(Array(40).fill(0));
 
   useEffect(() => {
-    const updateTimeAndGreeting = () => {
+    const updateTime = () => {
       const now = new Date();
       setCurrentTime(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
       setCurrentDateStr(now.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'short' }));
-
-      const hour = now.getHours();
-      if (hour >= 5 && hour < 12) setGreetingTitle('Good Morning, Vivek! 👋');
-      else if (hour >= 12 && hour < 17) setGreetingTitle('Good Afternoon, Vivek! 👋');
-      else if (hour >= 17 && hour < 22) setGreetingTitle('Good Evening, Vivek! 👋');
-      else setGreetingTitle('Good Night, Vivek! 👋');
     };
 
-    updateTimeAndGreeting();
-    const interval = setInterval(updateTimeAndGreeting, 1000);
+    updateTime();
+    const interval = setInterval(updateTime, 1000);
     return () => clearInterval(interval);
   }, []);
 
@@ -81,10 +71,6 @@ export const AstraDesktopInterface: React.FC<AstraDesktopInterfaceProps> = ({
     };
     loadWeather();
   }, []);
-
-  useEffect(() => {
-    setRagDocsCount(vectorStoreService.getAllDocuments().length);
-  }, [lastResponseText]);
 
   // Dynamic Yellow Glowing Voice Waveform Line Render Loop
   useEffect(() => {
@@ -166,480 +152,234 @@ export const AstraDesktopInterface: React.FC<AstraDesktopInterfaceProps> = ({
         loop
         muted
         playsInline
-        className="absolute inset-0 w-full h-full object-cover object-center z-0 filter brightness-[0.62] contrast-[1.18] saturate-[1.15]"
+        className="absolute inset-0 w-full h-full object-cover object-center z-0 filter brightness-[0.68] contrast-[1.18] saturate-[1.15]"
         src="https://res.cloudinary.com/qia3rzqk/video/upload/v1786772058/VID-20260815-WA0003_gowuqn.mp4"
       />
 
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(5,3,13,0.15)_0%,rgba(5,3,13,0.6)_65%,rgba(5,3,13,0.92)_100%)] pointer-events-none z-10" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(5,3,13,0.1)_0%,rgba(5,3,13,0.5)_65%,rgba(5,3,13,0.88)_100%)] pointer-events-none z-10" />
 
-      {/* 2. MASTER DESKTOP WRAPPER (FIT 100% IN 100VH NO SCROLL) */}
-      <div className="relative z-20 w-full h-full p-2.5 flex flex-col justify-between gap-2 overflow-hidden">
+      {/* 2. MASTER DESKTOP WRAPPER */}
+      <div className="relative z-20 w-full h-full p-4 flex flex-col justify-between overflow-hidden">
         
         {/* TOP FLOATING BAR */}
-        <div className="w-full flex items-center justify-between gap-3 shrink-0">
+        <div className="w-full flex items-center justify-between gap-4 shrink-0">
           
           {/* Top Left Hamburger Button & Logo */}
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-3">
             <button
               onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-              className="p-2 rounded-xl bg-[#0e0a1f]/85 hover:bg-[#1a123a] border border-white/15 backdrop-blur-3xl text-amber-300 transition-all active:scale-95 shadow-md shadow-amber-500/10"
+              className="p-2.5 rounded-2xl bg-[#0e0a1f]/85 hover:bg-[#1a123a] border border-white/15 backdrop-blur-3xl text-amber-300 transition-all active:scale-95 shadow-lg shadow-amber-500/10"
               title="Toggle Menu"
             >
               {isSidebarOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
             </button>
 
-            <div className="w-6 h-6 rounded-lg bg-gradient-to-tr from-amber-500 via-yellow-400 to-amber-600 p-0.5 shadow-md shadow-amber-500/20">
-              <div className="w-full h-full rounded-[5px] bg-[#0d0926] flex items-center justify-center">
-                <Sparkles className="w-3 h-3 text-amber-300 animate-pulse" />
+            <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-amber-500 via-yellow-400 to-amber-600 p-0.5 shadow-md shadow-amber-500/20">
+              <div className="w-full h-full rounded-[10px] bg-[#0d0926] flex items-center justify-center">
+                <Sparkles className="w-4 h-4 text-amber-300 animate-pulse" />
               </div>
             </div>
             <div>
-              <h1 className="text-[11px] font-bold tracking-[0.3em] text-white uppercase">ASTRA</h1>
-              <p className="text-[7.5px] font-mono tracking-widest text-amber-200/80 uppercase">AI PERSONAL ASSISTANT</p>
+              <h1 className="text-xs font-bold tracking-[0.3em] text-white uppercase">ASTRA</h1>
+              <p className="text-[8px] font-mono tracking-widest text-amber-200/80 uppercase">AI PERSONAL ASSISTANT</p>
             </div>
           </div>
 
           {/* Top Center Command Input Bar */}
-          <div className="flex items-center gap-2 flex-1 max-w-lg">
-            <form onSubmit={handleSubmit} className="flex-1 flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#0e0a1f]/85 border border-white/15 backdrop-blur-3xl shadow-lg">
-              <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-pulse" />
+          <div className="flex items-center gap-2 flex-1 max-w-xl">
+            <form onSubmit={handleSubmit} className="flex-1 flex items-center gap-2 px-5 py-2 rounded-full bg-[#0e0a1f]/85 border border-white/15 backdrop-blur-3xl shadow-xl">
+              <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
               <input
                 type="text"
                 value={inputText}
                 onChange={(e) => setInputText(e.target.value)}
-                placeholder="Ask Astra anything..."
-                className="flex-1 bg-transparent border-none outline-none text-[11px] text-white placeholder:text-white/40 font-sans tracking-wide"
+                placeholder="Ask Astra anything, Boss..."
+                className="flex-1 bg-transparent border-none outline-none text-xs text-white placeholder:text-white/40 font-sans tracking-wide"
               />
               <button
                 type="button"
                 onClick={onToggleVoice}
-                className={`p-1 rounded-full transition-all ${
+                className={`p-1.5 rounded-full transition-all ${
                   state === 'listening' || state === 'speaking' ? 'bg-amber-400 text-black animate-pulse' : 'text-white/60 hover:text-white'
                 }`}
               >
-                <Mic className="w-3.5 h-3.5" />
+                <Mic className="w-4 h-4" />
               </button>
             </form>
 
-            <span className="px-2.5 py-1.5 rounded-2xl bg-[#0e0a1f]/85 border border-white/15 backdrop-blur-3xl text-[9px] font-mono text-white/60 shadow-md">
+            <span className="px-3 py-2 rounded-2xl bg-[#0e0a1f]/85 border border-white/15 backdrop-blur-3xl text-[10px] font-mono text-white/60 shadow-lg">
               Ctrl + Space
             </span>
           </div>
 
           {/* Top Right Status Badge */}
-          <div className="flex items-center gap-3 px-4 py-1.5 rounded-full bg-[#0e0a1f]/85 border border-white/15 backdrop-blur-3xl text-[11px] font-mono shadow-md">
+          <div className="flex items-center gap-4 px-5 py-2 rounded-full bg-[#0e0a1f]/85 border border-white/15 backdrop-blur-3xl text-xs font-mono shadow-xl">
             <div className="flex flex-col items-end">
-              <span className="font-bold text-white text-[11px] tracking-wider">{currentTime}</span>
-              <span className="text-[8px] text-white/50">{currentDateStr}</span>
+              <span className="font-bold text-white text-xs tracking-wider">{currentTime}</span>
+              <span className="text-[9px] text-white/50">{currentDateStr}</span>
             </div>
-            <div className="h-5 w-px bg-white/15" />
-            <div className="flex items-center gap-1.5">
-              <Moon className="w-3.5 h-3.5 text-cyan-300" />
+            <div className="h-6 w-px bg-white/15" />
+            <div className="flex items-center gap-2">
+              <Moon className="w-4 h-4 text-cyan-300" />
               <div className="flex flex-col">
-                <span className="font-bold text-white text-[11px]">{weather ? `${weather.temperature}°` : '28°'}</span>
-                <span className="text-[8px] text-white/50">{weather?.condition || 'Clear Sky'}</span>
+                <span className="font-bold text-white text-xs">{weather ? `${weather.temperature}°` : '28°'}</span>
+                <span className="text-[9px] text-white/50">{weather?.condition || 'Clear Sky'}</span>
               </div>
             </div>
-            <div className="h-5 w-px bg-white/15" />
+            <div className="h-6 w-px bg-white/15" />
             <button onClick={() => setIsSettingsOpen(true)} className="text-white/60 hover:text-white">
-              <Bell className="w-3.5 h-3.5" />
+              <Bell className="w-4 h-4" />
             </button>
           </div>
         </div>
 
-        {/* MAIN DESKTOP GRID LAYOUT */}
-        <div className="w-full flex-1 grid grid-cols-12 gap-2.5 items-stretch overflow-hidden">
+        {/* MAIN CENTERPIECE: CLEAN SCREEN REVEALING THE FULL ASTROLABE WHEEL & VOICE LINE */}
+        <main className="relative z-20 flex-1 flex flex-col items-center justify-center p-4">
           
-          {/* LEFT COLUMN: SYSTEM STATUS, TODAY'S OVERVIEW & LIVE WEATHER (3 COLS) */}
-          <div className="col-span-3 flex flex-col gap-2 justify-between overflow-hidden">
-            
-            {/* Welcome & Greeting Card */}
-            <div className="p-3 rounded-2xl bg-[#0e0a1f]/80 border border-white/15 backdrop-blur-3xl shadow-xl flex flex-col gap-1 text-[11px]">
-              <h3 className="font-bold text-white text-xs">{greetingTitle}</h3>
-              <p className="text-[9px] text-amber-200/80 font-mono">Astra is here to help you.</p>
+          {/* Header Title & Glowing Yellow Waveform SVG */}
+          <div className="flex flex-col items-center text-center mb-6">
+            <h1 className="text-5xl md:text-7xl font-light tracking-[0.38em] text-white font-sans uppercase drop-shadow-[0_4px_30px_rgba(255,255,255,0.7)]">
+              ASTRA
+            </h1>
+            <p className="text-xs md:text-sm font-semibold tracking-[0.42em] text-amber-200 font-mono uppercase mt-2 drop-shadow-md">
+              AI PERSONAL ASSISTANT
+            </p>
+
+            {/* Dynamic Yellow Glowing Voice Waveform SVG */}
+            <div className="w-full max-w-[460px] h-14 flex items-center justify-center mt-3">
+              <svg className="w-full h-full overflow-visible" viewBox="0 0 450 50">
+                <defs>
+                  <linearGradient id="yellowGlowGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.2" />
+                    <stop offset="25%" stopColor="#fbbf24" stopOpacity="0.8" />
+                    <stop offset="50%" stopColor="#fef08a" stopOpacity="1.0" />
+                    <stop offset="75%" stopColor="#fbbf24" stopOpacity="0.8" />
+                    <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.2" />
+                  </linearGradient>
+                  <filter id="neonYellowGlow" x="-30%" y="-30%" width="160%" height="160%">
+                    <feGaussianBlur stdDeviation="3.5" result="blur" />
+                    <feMerge>
+                      <feMergeNode in="blur" />
+                      <feMergeNode in="blur" />
+                      <feMergeNode in="SourceGraphic" />
+                    </feMerge>
+                  </filter>
+                </defs>
+
+                <path
+                  d={generateSvgPath()}
+                  fill="none"
+                  stroke="#f59e0b"
+                  strokeWidth="4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  filter="url(#neonYellowGlow)"
+                  className="opacity-80"
+                />
+                <path
+                  d={generateSvgPath()}
+                  fill="none"
+                  stroke="url(#yellowGlowGrad)"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
             </div>
-
-            {/* System Status Card */}
-            <div className="p-3 rounded-2xl bg-[#0e0a1f]/80 border border-white/15 backdrop-blur-3xl shadow-xl flex flex-col gap-2 text-[11px] flex-1 justify-center">
-              <div className="p-2 rounded-xl bg-black/40 border border-white/10 flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-full border-2 border-cyan-400/80 border-t-amber-400 flex items-center justify-center font-mono font-bold text-[10px] text-white">
-                  98%
-                </div>
-                <div>
-                  <span className="font-bold text-white text-[11px]">System Status</span>
-                  <p className="text-[9px] text-emerald-400 font-mono">Optimal •</p>
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-1.5 font-mono text-[9.5px]">
-                <div className="flex justify-between items-center">
-                  <span className="text-white/60 flex items-center gap-1"><Cpu className="w-3 h-3 text-cyan-400" /> CPU</span>
-                  <div className="w-24 h-1.5 rounded-full bg-white/10 overflow-hidden"><div className="w-[34%] h-full bg-cyan-400" /></div>
-                  <span className="text-white">34%</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-white/60 flex items-center gap-1"><Activity className="w-3 h-3 text-purple-400" /> RAM</span>
-                  <div className="w-24 h-1.5 rounded-full bg-white/10 overflow-hidden"><div className="w-[62%] h-full bg-purple-400" /></div>
-                  <span className="text-white">62%</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-white/60 flex items-center gap-1"><HardDrive className="w-3 h-3 text-amber-400" /> Storage</span>
-                  <div className="w-24 h-1.5 rounded-full bg-white/10 overflow-hidden"><div className="w-[71%] h-full bg-amber-400" /></div>
-                  <span className="text-white">71%</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-white/60 flex items-center gap-1"><Wifi className="w-3 h-3 text-emerald-400" /> Network</span>
-                  <div className="w-24 h-1.5 rounded-full bg-white/10 overflow-hidden"><div className="w-[89%] h-full bg-emerald-400" /></div>
-                  <span className="text-white">89%</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Today's Overview Card */}
-            <div className="p-3 rounded-2xl bg-[#0e0a1f]/80 border border-white/15 backdrop-blur-3xl shadow-xl flex flex-col gap-1.5 text-[11px]">
-              <div className="flex justify-between items-center border-b border-white/10 pb-1">
-                <span className="font-bold text-white">Today's Overview</span>
-                <span className="text-[9px] text-amber-300 font-mono cursor-pointer">View all</span>
-              </div>
-              <div className="flex flex-col gap-1 text-[10px] font-mono text-white/80">
-                <div className="flex items-center gap-1.5"><span className="w-3.5 h-3.5 rounded bg-amber-500/20 text-amber-300 flex items-center justify-center text-[9px] font-bold">5</span> Tasks Pending</div>
-                <div className="flex items-center gap-1.5"><span className="w-3.5 h-3.5 rounded bg-cyan-500/20 text-cyan-300 flex items-center justify-center text-[9px] font-bold">2</span> Meetings</div>
-                <div className="flex items-center gap-1.5"><span className="w-3.5 h-3.5 rounded bg-purple-500/20 text-purple-300 flex items-center justify-center text-[9px] font-bold">3</span> Reminders</div>
-                <div className="flex items-center gap-1.5"><span className="w-3.5 h-3.5 rounded bg-emerald-500/20 text-emerald-300 flex items-center justify-center text-[9px] font-bold">1</span> Important Event</div>
-              </div>
-            </div>
-
-            {/* Live Weather Card */}
-            <div className="p-3 rounded-2xl bg-[#0e0a1f]/80 border border-white/15 backdrop-blur-3xl shadow-xl flex flex-col gap-1 text-[11px]">
-              <div className="flex justify-between items-center">
-                <div>
-                  <span className="text-[8px] text-white/50 font-mono uppercase">Live Weather</span>
-                  <h4 className="font-bold text-white text-[11px]">{weather?.city || 'Dehradun, India'}</h4>
-                </div>
-                <Sun className="w-4 h-4 text-amber-400 animate-spin" />
-              </div>
-              <div className="flex items-baseline justify-between mt-0.5">
-                <span className="text-xl font-extrabold text-white">{weather ? `${weather.temperature}°` : '28°'}</span>
-                <span className="text-[10px] text-amber-200 font-semibold">{weather?.condition || 'Clear Sky'}</span>
-              </div>
-            </div>
-
           </div>
 
-          {/* CENTER COLUMN: ASTRA HEADER, GLOWING WAVEFORM & RESPONSE PANEL (6 COLS) */}
-          <div className="col-span-6 flex flex-col items-center justify-between py-2 overflow-hidden">
-            
-            {/* ASTRA Center Header */}
-            <div className="flex flex-col items-center text-center">
-              <h1 className="text-4xl md:text-5xl font-light tracking-[0.38em] text-white font-sans uppercase drop-shadow-[0_4px_25px_rgba(255,255,255,0.6)]">
-                ASTRA
-              </h1>
-              <p className="text-[10px] font-semibold tracking-[0.42em] text-amber-200 font-mono uppercase mt-1 drop-shadow-md">
-                AI PERSONAL ASSISTANT
-              </p>
+          {/* Live Response Panel */}
+          <div className="w-full max-w-xl">
+            <AstraResponse
+              state={state}
+              responseText={lastResponseText}
+              onStopSpeaking={onStopSpeaking}
+            />
+          </div>
 
-              {/* Dynamic Yellow Glowing Voice Waveform SVG */}
-              <div className="w-full max-w-[380px] h-10 flex items-center justify-center mt-1">
-                <svg className="w-full h-full overflow-visible" viewBox="0 0 450 50">
-                  <defs>
-                    <linearGradient id="yellowGlowGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                      <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.2" />
-                      <stop offset="25%" stopColor="#fbbf24" stopOpacity="0.8" />
-                      <stop offset="50%" stopColor="#fef08a" stopOpacity="1.0" />
-                      <stop offset="75%" stopColor="#fbbf24" stopOpacity="0.8" />
-                      <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.2" />
-                    </linearGradient>
-                    <filter id="neonYellowGlow" x="-30%" y="-30%" width="160%" height="160%">
-                      <feGaussianBlur stdDeviation="3.5" result="blur" />
-                      <feMerge>
-                        <feMergeNode in="blur" />
-                        <feMergeNode in="blur" />
-                        <feMergeNode in="SourceGraphic" />
-                      </feMerge>
-                    </filter>
-                  </defs>
-
-                  <path
-                    d={generateSvgPath()}
-                    fill="none"
-                    stroke="#f59e0b"
-                    strokeWidth="3.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    filter="url(#neonYellowGlow)"
-                    className="opacity-80"
-                  />
-                  <path
-                    d={generateSvgPath()}
-                    fill="none"
-                    stroke="url(#yellowGlowGrad)"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
+          {/* Camera Overlay Modal */}
+          <AnimatePresence>
+            {isCameraOpen && (
+              <div className="mt-4">
+                <CameraWidget isOpen={isCameraOpen} onClose={() => setIsCameraOpen(false)} />
               </div>
-            </div>
+            )}
+          </AnimatePresence>
 
-            {/* Live Response Panel */}
-            <div className="w-full max-w-lg my-auto">
-              <AstraResponse
-                state={state}
-                responseText={lastResponseText}
-                onStopSpeaking={onStopSpeaking}
-              />
-            </div>
+          {/* RAG Knowledge Base Overlay */}
+          <AnimatePresence>
+            {isRAGOpen && (
+              <div className="mt-4">
+                <KnowledgeRAGWidget />
+              </div>
+            )}
+          </AnimatePresence>
 
-            {/* Camera Overlay Modal */}
-            <AnimatePresence>
-              {isCameraOpen && (
-                <div className="mb-2">
-                  <CameraWidget isOpen={isCameraOpen} onClose={() => setIsCameraOpen(false)} />
-                </div>
-              )}
-            </AnimatePresence>
-
-            {/* RAG Knowledge Base Overlay */}
-            <AnimatePresence>
-              {isRAGOpen && (
-                <div className="mb-2">
-                  <KnowledgeRAGWidget />
-                </div>
-              )}
-            </AnimatePresence>
-
-            {/* Interactive 3D Three.js Golden Mechanical Orb Canvas Overlay */}
-            <AnimatePresence>
-              {isOrbCanvasOpen && (
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.8 }}
-                  className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/80 backdrop-blur-2xl p-4"
+          {/* Interactive 3D Three.js Golden Mechanical Orb Canvas Overlay */}
+          <AnimatePresence>
+            {isOrbCanvasOpen && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black/80 backdrop-blur-2xl p-4"
+              >
+                <button
+                  onClick={() => setIsOrbCanvasOpen(false)}
+                  className="absolute top-6 right-6 p-3 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white"
                 >
-                  <button
-                    onClick={() => setIsOrbCanvasOpen(false)}
-                    className="absolute top-6 right-6 p-3 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white"
-                  >
-                    <X className="w-6 h-6" />
-                  </button>
-                  <h2 className="text-lg font-bold text-amber-300 tracking-widest font-mono mb-1">
-                    ASTRA 3D MECHANICAL CHAKRA ORB
-                  </h2>
-                  <p className="text-[10px] text-white/60 font-mono mb-3">
-                    Drag to rotate 360° • Scroll to zoom
-                  </p>
-                  <div className="w-[320px] h-[320px] md:w-[450px] md:h-[450px]">
-                    <AstraOrb state={state} showStatusPill={true} />
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-          </div>
-
-          {/* RIGHT COLUMN: UPCOMING SCHEDULE, ACTIVE PROJECTS & QUICK ACTIONS (3 COLS) */}
-          <div className="col-span-3 flex flex-col gap-2 justify-between overflow-hidden">
-            
-            {/* Upcoming Schedule Card */}
-            <div className="p-3 rounded-2xl bg-[#0e0a1f]/80 border border-white/15 backdrop-blur-3xl shadow-xl flex flex-col gap-2 text-[11px]">
-              <div className="flex justify-between items-center border-b border-white/10 pb-1">
-                <span className="font-bold text-white">Upcoming Schedule</span>
-                <span className="text-[9px] text-cyan-400 font-mono cursor-pointer">View Calendar</span>
-              </div>
-
-              <div className="flex flex-col gap-1.5 font-mono text-[10px]">
-                <div className="flex items-center gap-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-amber-400" />
-                  <span className="text-white/60 font-bold">09:30 PM</span>
-                  <span className="text-white font-semibold truncate">Project Discussion</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-purple-400" />
-                  <span className="text-white/60 font-bold">11:00 PM</span>
-                  <span className="text-white font-semibold truncate">UI/UX Review</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-cyan-400" />
-                  <span className="text-white/60 font-bold">01:30 AM</span>
-                  <span className="text-white font-semibold truncate">Focus Time</span>
-                </div>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
-                  <span className="text-white/60 font-bold">04:00 AM</span>
-                  <span className="text-white font-semibold truncate">Gym Workout</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Active Projects Card */}
-            <div className="p-3 rounded-2xl bg-[#0e0a1f]/80 border border-white/15 backdrop-blur-3xl shadow-xl flex flex-col gap-2 text-[11px]">
-              <div className="flex justify-between items-center border-b border-white/10 pb-1">
-                <span className="font-bold text-white">Active Projects</span>
-                <span className="text-[9px] text-cyan-400 font-mono cursor-pointer">View all</span>
-              </div>
-
-              <div className="flex flex-col gap-2 text-[10px]">
-                <div>
-                  <div className="flex justify-between mb-0.5 font-mono">
-                    <span className="text-white font-semibold">Oldverse Production</span>
-                    <span className="text-cyan-400">78%</span>
-                  </div>
-                  <div className="w-full h-1 rounded-full bg-white/10 overflow-hidden"><div className="w-[78%] h-full bg-cyan-400" /></div>
-                </div>
-                <div>
-                  <div className="flex justify-between mb-0.5 font-mono">
-                    <span className="text-white font-semibold">ASTRA OS</span>
-                    <span className="text-amber-400">62%</span>
-                  </div>
-                  <div className="w-full h-1 rounded-full bg-white/10 overflow-hidden"><div className="w-[62%] h-full bg-amber-400" /></div>
-                </div>
-                <div>
-                  <div className="flex justify-between mb-0.5 font-mono">
-                    <span className="text-white font-semibold">Website Redesign</span>
-                    <span className="text-purple-400">40%</span>
-                  </div>
-                  <div className="w-full h-1 rounded-full bg-white/10 overflow-hidden"><div className="w-[40%] h-full bg-purple-400" /></div>
-                </div>
-              </div>
-            </div>
-
-            {/* Quick Actions Card */}
-            <div className="p-3 rounded-2xl bg-[#0e0a1f]/80 border border-white/15 backdrop-blur-3xl shadow-xl flex flex-col gap-2 text-[11px]">
-              <span className="font-bold text-white border-b border-white/10 pb-1">Quick Actions</span>
-              <div className="grid grid-cols-3 gap-1.5 text-center text-[9px] font-mono">
-                <button onClick={() => onSendPrompt('Summarize recent documents')} className="p-1.5 rounded-lg bg-black/40 border border-white/10 hover:border-amber-400 text-amber-200 flex flex-col items-center gap-0.5">
-                  <FileText className="w-3 h-3" />
-                  <span>Summarize</span>
+                  <X className="w-6 h-6" />
                 </button>
-                <button onClick={() => onSendPrompt('Create new task')} className="p-1.5 rounded-lg bg-black/40 border border-white/10 hover:border-cyan-400 text-cyan-200 flex flex-col items-center gap-0.5">
-                  <CheckSquare className="w-3 h-3" />
-                  <span>Task</span>
-                </button>
-                <button onClick={() => setIsRAGOpen(!isRAGOpen)} className="p-1.5 rounded-lg bg-black/40 border border-white/10 hover:border-purple-400 text-purple-200 flex flex-col items-center gap-0.5">
-                  <Layers className="w-3 h-3" />
-                  <span>RAG ({ragDocsCount})</span>
-                </button>
-                <button onClick={() => setIsCameraOpen(!isCameraOpen)} className="p-1.5 rounded-lg bg-black/40 border border-white/10 hover:border-emerald-400 text-emerald-200 flex flex-col items-center gap-0.5">
-                  <Scissors className="w-3 h-3" />
-                  <span>Camera</span>
-                </button>
-                <button onClick={() => onSendPrompt('Translate current text')} className="p-1.5 rounded-lg bg-black/40 border border-white/10 hover:border-pink-400 text-pink-200 flex flex-col items-center gap-0.5">
-                  <Globe className="w-3 h-3" />
-                  <span>Translate</span>
-                </button>
-                <button onClick={() => setIsSettingsOpen(true)} className="p-1.5 rounded-lg bg-black/40 border border-white/10 hover:border-white text-white flex flex-col items-center gap-0.5">
-                  <SettingsIcon className="w-3 h-3" />
-                  <span>Settings</span>
-                </button>
-              </div>
-            </div>
-
-          </div>
-
-        </div>
-
-        {/* BOTTOM CARDS ROW: RECENT CONVERSATIONS, SUGGESTIONS, MEMORY LANE, VOICE & ORB PREVIEW (5 CARDS FIT IN 100VH) */}
-        <div className="w-full grid grid-cols-5 gap-2.5 items-stretch shrink-0">
-          
-          {/* Card 1: Recent Conversations */}
-          <div className="p-2.5 rounded-2xl bg-[#0e0a1f]/80 border border-white/15 backdrop-blur-3xl shadow-xl flex flex-col justify-between text-[11px]">
-            <div className="flex justify-between items-center border-b border-white/10 pb-1">
-              <span className="font-bold text-white text-[10px]">Recent Conversations</span>
-              <span className="text-[8px] text-cyan-400 font-mono cursor-pointer">View all</span>
-            </div>
-            <div className="flex flex-col gap-1 text-[9px] text-white/70 font-sans mt-1">
-              <div onClick={() => onSendPrompt('Create a production schedule')} className="flex justify-between cursor-pointer hover:text-white"><span className="truncate max-w-[110px]">• Production schedule</span><span className="text-[7.5px] text-white/40 font-mono">10:21 PM</span></div>
-              <div onClick={() => onSendPrompt('Summarize this PDF for me')} className="flex justify-between cursor-pointer hover:text-white"><span className="truncate max-w-[110px]">• Summarize PDF</span><span className="text-[7.5px] text-white/40 font-mono">09:15 PM</span></div>
-              <div onClick={() => onSendPrompt('Best places to visit in Uttarakhand')} className="flex justify-between cursor-pointer hover:text-white"><span className="truncate max-w-[110px]">• Uttarakhand trip</span><span className="text-[7.5px] text-white/40 font-mono">06:42 PM</span></div>
-            </div>
-          </div>
-
-          {/* Card 2: Astra Suggestions */}
-          <div className="p-2.5 rounded-2xl bg-[#0e0a1f]/80 border border-white/15 backdrop-blur-3xl shadow-xl flex flex-col justify-between text-[11px]">
-            <div className="flex justify-between items-center border-b border-white/10 pb-1">
-              <span className="font-bold text-amber-300 text-[10px]">Astra Suggestions</span>
-              <span className="text-[8px] text-white/40 font-mono">For you</span>
-            </div>
-            <div className="flex flex-col gap-1 text-[9px] text-white/80 font-mono mt-1">
-              <p className="text-amber-300 truncate">• Meeting in 48 mins (Project Discussion)</p>
-              <p className="text-cyan-300 truncate">• Your system is running smoothly</p>
-              <p className="text-purple-300 truncate">• Take a break, working for 2h 15m</p>
-            </div>
-          </div>
-
-          {/* Card 3: Memory Lane */}
-          <div className="p-2.5 rounded-2xl bg-[#0e0a1f]/80 border border-white/15 backdrop-blur-3xl shadow-xl flex flex-col justify-between text-[11px]">
-            <div className="flex justify-between items-center border-b border-white/10 pb-1">
-              <span className="font-bold text-purple-300 text-[10px]">Memory Lane</span>
-              <span className="text-[8px] text-white/40 font-mono">Worked on</span>
-            </div>
-            <div className="flex items-center gap-1.5 text-[9px] font-mono mt-1">
-              <div onClick={() => setIsRAGOpen(true)} className="p-1.5 rounded-lg bg-black/40 border border-white/10 flex flex-col items-center text-amber-300 flex-1 cursor-pointer hover:border-amber-400">
-                <Folder className="w-3.5 h-3.5 mb-0.5" />
-                <span className="truncate max-w-[45px]">Oldverse</span>
-              </div>
-              <div onClick={() => setIsRAGOpen(true)} className="p-1.5 rounded-lg bg-black/40 border border-white/10 flex flex-col items-center text-rose-400 flex-1 cursor-pointer hover:border-rose-400">
-                <FileCode className="w-3.5 h-3.5 mb-0.5" />
-                <span className="truncate max-w-[45px]">Brief.pdf</span>
-              </div>
-              <div onClick={() => setIsRAGOpen(true)} className="p-1.5 rounded-lg bg-black/40 border border-white/10 flex flex-col items-center text-cyan-300 flex-1 cursor-pointer hover:border-cyan-400">
-                <ImageIcon className="w-3.5 h-3.5 mb-0.5" />
-                <span className="truncate max-w-[45px]">Moodboard</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Card 4: Astra Voice */}
-          <div className="p-2.5 rounded-2xl bg-[#0e0a1f]/80 border border-amber-500/30 backdrop-blur-3xl shadow-xl flex flex-col justify-between text-[11px]">
-            <div className="flex justify-between items-center border-b border-white/10 pb-1">
-              <span className="font-bold text-amber-300 text-[10px]">Astra Voice</span>
-              <span className="text-[8px] text-white/40 font-mono">Click to talk</span>
-            </div>
-            <button
-              onClick={onToggleVoice}
-              className={`w-full py-2 px-2 rounded-xl flex flex-col items-center justify-center gap-0.5 font-bold transition-all active:scale-95 mt-1 ${
-                state === 'speaking' || state === 'listening'
-                  ? 'bg-amber-400 text-black animate-pulse shadow-[0_0_15px_rgba(245,158,11,0.8)]'
-                  : 'bg-white/10 border border-white/15 text-amber-300 hover:bg-white/20'
-              }`}
-            >
-              <Mic className="w-3.5 h-3.5" />
-              <span className="text-[9px] font-mono">{state === 'listening' ? 'Listening...' : "I'm listening..."}</span>
-            </button>
-          </div>
-
-          {/* Card 5: Astra Orb (Click to focus) */}
-          <div 
-            onClick={() => setIsOrbCanvasOpen(true)}
-            className="p-2.5 rounded-2xl bg-[#0e0a1f]/80 border border-amber-500/40 hover:border-amber-400 backdrop-blur-3xl shadow-xl flex flex-col justify-between text-[11px] cursor-pointer group transition-all"
-          >
-            <div className="flex justify-between items-center border-b border-white/10 pb-1">
-              <span className="font-bold text-amber-300 text-[10px]">Astra Orb</span>
-              <span className="text-[8px] text-amber-400/80 font-mono group-hover:text-amber-200">Click to focus</span>
-            </div>
-            <div className="flex flex-col items-center justify-center my-auto py-0.5">
-              <div className="w-9 h-9 rounded-full border border-amber-400/60 p-0.5 flex items-center justify-center animate-spin">
-                <Sparkles className="w-4 h-4 text-amber-300" />
-              </div>
-            </div>
-          </div>
-
-        </div>
+                <h2 className="text-xl font-bold text-amber-300 tracking-widest font-mono mb-1">
+                  ASTRA 3D MECHANICAL CHAKRA ORB
+                </h2>
+                <p className="text-xs text-white/60 font-mono mb-4">
+                  Drag to rotate 360° • Scroll to zoom
+                </p>
+                <div className="w-[340px] h-[340px] md:w-[480px] md:h-[480px]">
+                  <AstraOrb state={state} showStatusPill={true} />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </main>
 
         {/* BOTTOM FLOATING DOCK BAR */}
-        <div className="w-full flex items-center justify-center py-0.5 shrink-0">
-          <div className="px-5 py-1.5 rounded-full bg-[#0e0a1f]/90 border border-white/15 backdrop-blur-3xl text-[10px] font-mono flex items-center gap-3 shadow-xl">
-            <button onClick={() => setIsSettingsOpen(true)} className="text-white/60 hover:text-white">
-              <SettingsIcon className="w-3.5 h-3.5" />
+        <div className="w-full flex items-center justify-center py-2 shrink-0">
+          <div className="px-6 py-2.5 rounded-full bg-[#0e0a1f]/90 border border-white/15 backdrop-blur-3xl text-xs font-mono flex items-center gap-4 shadow-2xl">
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              className="p-1 text-amber-300 hover:text-amber-200 flex items-center gap-1.5 font-bold"
+              title="Open Navigation"
+            >
+              <Menu className="w-4 h-4" />
+              <span>Menu</span>
             </button>
-            <div className="h-3 w-px bg-white/15" />
-            <button onClick={onToggleVoice} className="flex items-center gap-1.5 text-amber-300 font-bold hover:text-amber-200">
-              <Sparkles className="w-3 h-3 animate-pulse text-amber-400" />
+            <div className="h-4 w-px bg-white/15" />
+            <button
+              onClick={onToggleVoice}
+              className="flex items-center gap-2 text-amber-300 font-bold hover:text-amber-200"
+            >
+              <Sparkles className="w-4 h-4 animate-pulse text-amber-400" />
               <span>Press <span className="text-white font-extrabold">★</span> to talk to Astra</span>
             </button>
-            <div className="h-3 w-px bg-white/15" />
-            <span className="text-white/60">⌘ K</span>
+            <div className="h-4 w-px bg-white/15" />
+            <button
+              onClick={() => setIsOrbCanvasOpen(true)}
+              className="p-1 text-cyan-300 hover:text-cyan-200 flex items-center gap-1.5"
+              title="Focus 3D Orb"
+            >
+              <Eye className="w-4 h-4" />
+              <span>3D Orb</span>
+            </button>
+            <div className="h-4 w-px bg-white/15" />
+            <button
+              onClick={() => setIsSettingsOpen(true)}
+              className="text-white/60 hover:text-white"
+              title="Settings"
+            >
+              <SettingsIcon className="w-4 h-4" />
+            </button>
           </div>
         </div>
 
@@ -649,15 +389,15 @@ export const AstraDesktopInterface: React.FC<AstraDesktopInterfaceProps> = ({
       <AnimatePresence>
         {isSidebarOpen && (
           <motion.div
-            initial={{ opacity: 0, x: -60 }}
+            initial={{ opacity: 0, x: -80 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -60 }}
-            className="fixed top-12 left-3 z-50 w-64 p-3.5 rounded-3xl bg-[#0e0a1f]/95 border border-amber-500/40 backdrop-blur-3xl shadow-[0_20px_50px_rgba(0,0,0,0.8)] flex flex-col gap-2 font-sans"
+            exit={{ opacity: 0, x: -80 }}
+            className="fixed top-12 left-4 z-50 w-72 p-4 rounded-3xl bg-[#0e0a1f]/95 border border-amber-500/40 backdrop-blur-3xl shadow-[0_20px_50px_rgba(0,0,0,0.85)] flex flex-col gap-3 font-sans"
           >
-            <div className="flex items-center justify-between border-b border-white/10 pb-2.5">
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-amber-400" />
-                <span className="font-bold text-white text-xs tracking-wider">ASTRA NAVIGATION</span>
+                <span className="font-bold text-white text-xs tracking-wider">ASTRA CONTROL PANEL</span>
               </div>
               <button onClick={() => setIsSidebarOpen(false)} className="p-1 text-white/60 hover:text-white">
                 <X className="w-4 h-4" />
@@ -677,13 +417,13 @@ export const AstraDesktopInterface: React.FC<AstraDesktopInterfaceProps> = ({
                       if (item.name === 'Settings') setIsSettingsOpen(true);
                       setIsSidebarOpen(false);
                     }}
-                    className={`w-full px-3 py-2 rounded-xl flex items-center justify-between transition-all ${
+                    className={`w-full px-3.5 py-2.5 rounded-2xl flex items-center justify-between transition-all ${
                       isActive 
                         ? 'bg-gradient-to-r from-amber-500/30 to-yellow-500/10 border border-amber-500/50 text-amber-300 font-bold' 
                         : 'text-white/70 hover:bg-white/10 hover:text-white'
                     }`}
                   >
-                    <div className="flex items-center gap-2.5">
+                    <div className="flex items-center gap-3">
                       <Icon className={`w-4 h-4 ${isActive ? 'text-amber-400' : 'text-white/60'}`} />
                       <span>{item.name}</span>
                     </div>
@@ -694,16 +434,16 @@ export const AstraDesktopInterface: React.FC<AstraDesktopInterfaceProps> = ({
             </div>
 
             {/* Profile Drawer Footer */}
-            <div className="mt-2 pt-2.5 border-t border-white/10 flex items-center justify-between px-1">
+            <div className="mt-2 pt-3 border-t border-white/10 flex items-center justify-between px-1">
               <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-amber-400 to-yellow-500 p-0.5">
-                  <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center text-[10px] font-bold text-amber-300">
+                <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-amber-400 to-yellow-500 p-0.5">
+                  <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center text-xs font-bold text-amber-300">
                     VR
                   </div>
                 </div>
                 <div>
                   <h4 className="font-bold text-white text-[11px]">Vivek Rautela</h4>
-                  <p className="text-[8.5px] text-amber-200/80 font-mono">Premium User</p>
+                  <p className="text-[9px] text-amber-200/80 font-mono">Premium User</p>
                 </div>
               </div>
               <UserCheck className="w-4 h-4 text-emerald-400" />
