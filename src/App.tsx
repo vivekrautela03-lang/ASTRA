@@ -66,6 +66,27 @@ export function App() {
     theme: 'jarvis-cyan'
   });
 
+  // Helper to re-arm continuous background mic listening (Declared FIRST)
+  const armContinuousMicListener = useCallback(() => {
+    voiceVisionEngine.startListening((transcript, isFinal) => {
+      if (!isFinal && transcript.trim()) {
+        if (!isProcessingRef.current) {
+          setState('listening');
+        }
+        setLastResponseText(`Listening: "${transcript}"...`);
+      } else if (isFinal && transcript.trim()) {
+        if (isProcessingRef.current) {
+          // ASTRA is currently speaking or thinking: Queue the next question!
+          promptQueueRef.current.push(transcript.trim());
+          setLastResponseText(`Queued next question: "${transcript}"`);
+        } else {
+          // Immediately process the user's question
+          processPromptRef.current(transcript.trim());
+        }
+      }
+    });
+  }, []);
+
   // Expose setEvaState to window object for global controller access
   useEffect(() => {
     window.setEvaState = (newState: EvaState) => {
@@ -96,27 +117,6 @@ export function App() {
       unsubProactive();
       proactiveMonitor.stopMonitoring();
     };
-  }, []);
-
-  // Helper to re-arm continuous background mic listening for turn-taking
-  const armContinuousMicListener = useCallback(() => {
-    voiceVisionEngine.startListening((transcript, isFinal) => {
-      if (!isFinal && transcript.trim()) {
-        if (!isProcessingRef.current) {
-          setState('listening');
-        }
-        setLastResponseText(`Listening: "${transcript}"...`);
-      } else if (isFinal && transcript.trim()) {
-        if (isProcessingRef.current) {
-          // ASTRA is currently speaking or thinking: Queue the next question!
-          promptQueueRef.current.push(transcript.trim());
-          setLastResponseText(`Queued next question: "${transcript}"`);
-        } else {
-          // Immediately process the user's question
-          processPromptRef.current(transcript.trim());
-        }
-      }
-    });
   }, []);
 
   // Core Prompt Processor with Queue Drainage & Background Listening
