@@ -286,19 +286,38 @@ export class AIEngine {
     if (lower === 'hi' || lower === 'hello' || lower === 'hey' || lower === 'astra' || lower === 'namaste') {
       fullText = voiceVisionEngine.getGreeting();
     } else {
-      // Primary API Execution Attempt
+      // Primary Backend Model Router Execution
       try {
-        if (model === 'gpt-4o' && OPENAI_API_KEY) {
-          fullText = (await this.callOpenAIAPI(prompt, searchContext)) || '';
-        } else if (model === 'llama-3-70b' && GROQ_API_KEY) {
-          fullText = (await this.callGroqAPI(prompt, searchContext)) || '';
-        } else if (model === 'gemini-1-5-pro' && GEMINI_API_KEY) {
-          fullText = (await this.callGeminiAPI(prompt, searchContext)) || '';
-        } else if (model === 'deepseek-r1' && DEEPSEEK_API_KEY) {
-          fullText = (await this.callDeepSeekAPI(prompt, searchContext)) || '';
+        const backendRes = await fetch('http://localhost:8990/api/astra/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt, modelId: model })
+        });
+        if (backendRes.ok) {
+          const backendData = await backendRes.json();
+          if (backendData.text) {
+            fullText = backendData.text;
+          }
         }
       } catch {
-        selfHealed = true;
+        // Backend offline, proceed to client fallback
+      }
+
+      // Secondary Direct Client-Side API Execution Attempt if needed
+      if (!fullText) {
+        try {
+          if (model === 'gpt-4o' && OPENAI_API_KEY) {
+            fullText = (await this.callOpenAIAPI(prompt, searchContext)) || '';
+          } else if (model === 'llama-3-70b' && GROQ_API_KEY) {
+            fullText = (await this.callGroqAPI(prompt, searchContext)) || '';
+          } else if (model === 'gemini-1-5-pro' && GEMINI_API_KEY) {
+            fullText = (await this.callGeminiAPI(prompt, searchContext)) || '';
+          } else if (model === 'deepseek-r1' && DEEPSEEK_API_KEY) {
+            fullText = (await this.callDeepSeekAPI(prompt, searchContext)) || '';
+          }
+        } catch {
+          selfHealed = true;
+        }
       }
 
       // AUTONOMOUS SELF-HEALING FALLBACK CHAIN:

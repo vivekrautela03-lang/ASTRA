@@ -5,7 +5,7 @@ import {
   FileText, Wrench, Settings as SettingsIcon,
   Mic, Moon, Sparkles, ChevronRight,
   X, Menu, UserCheck, Eye, Plus, Check, Trash2,
-  Database
+  Database, ShieldCheck, Cpu, Bot, Key
 } from 'lucide-react';
 import type { EvaState } from '../../types/eva';
 import { AstraResponse } from './AstraResponse';
@@ -13,6 +13,11 @@ import { AstraSettings } from './AstraSettings';
 import { AstraOrb } from './AstraOrb';
 import { CameraWidget } from './AstraWidgets/CameraWidget';
 import { KnowledgeRAGWidget } from './AstraWidgets/KnowledgeRAGWidget';
+import { AstraIntegrations } from './AstraIntegrations';
+import { AstraSecurityCenter } from './AstraSecurityCenter';
+import { AstraRoboticsHUD } from './AstraRoboticsHUD';
+import { AstraTaskStudio } from './AstraTaskStudio';
+import { AstraModelRouterView } from './AstraModelRouterView';
 import { internetSearchService, type GoogleWeatherData } from '../../services/internetSearchService';
 import { supabaseService } from '../../services/supabaseClient';
 
@@ -61,6 +66,11 @@ export const AstraDesktopInterface: React.FC<AstraDesktopInterfaceProps> = ({
   // Modals for Top Level Interactive Workspace
   const [isTasksOpen, setIsTasksOpen] = useState(false);
   const [isNotesOpen, setIsNotesOpen] = useState(false);
+  const [isTaskStudioOpen, setIsTaskStudioOpen] = useState(false);
+  const [isModelMatrixOpen, setIsModelMatrixOpen] = useState(false);
+  const [isIntegrationsOpen, setIsIntegrationsOpen] = useState(false);
+  const [isRoboticsOpen, setIsRoboticsOpen] = useState(false);
+  const [isSecurityOpen, setIsSecurityOpen] = useState(false);
 
   // Dynamic Tasks State
   const [tasks, setTasks] = useState<TaskItem[]>([
@@ -197,10 +207,14 @@ export const AstraDesktopInterface: React.FC<AstraDesktopInterfaceProps> = ({
   const navItems = [
     { name: 'Home', icon: Home, action: () => {} },
     { name: 'Chat with Astra', icon: MessageSquare, action: () => onToggleVoice() },
-    { name: 'Tasks', icon: CheckSquare, action: () => setIsTasksOpen(true) },
-    { name: 'Notes', icon: FileText, action: () => setIsNotesOpen(true) },
+    { name: 'Task & Workflow Studio', icon: CheckSquare, action: () => setIsTaskStudioOpen(true) },
+    { name: 'Model Router Matrix', icon: Cpu, action: () => setIsModelMatrixOpen(true) },
+    { name: 'API & Integrations', icon: Key, action: () => setIsIntegrationsOpen(true) },
+    { name: 'Robotics & Hardware HUD', icon: Bot, action: () => setIsRoboticsOpen(true) },
+    { name: 'Zero-Trust Security Center', icon: ShieldCheck, action: () => setIsSecurityOpen(true) },
     { name: 'Smart RAG Vault', icon: Wrench, action: () => setIsRAGOpen(true) },
     { name: 'Camera Vision', icon: Eye, action: () => setIsCameraOpen(true) },
+    { name: 'Notes Vault', icon: FileText, action: () => setIsNotesOpen(true) },
     { name: '3D Orb Focus', icon: Sparkles, action: () => setIsOrbCanvasOpen(true) },
     { name: 'Settings & Cloud', icon: SettingsIcon, action: () => setIsSettingsOpen(true) },
   ];
@@ -519,6 +533,112 @@ export const AstraDesktopInterface: React.FC<AstraDesktopInterfaceProps> = ({
               </motion.div>
             )}
           </AnimatePresence>
+
+          {/* Task & Workflow Studio Modal */}
+          <AnimatePresence>
+            {isTaskStudioOpen && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="fixed inset-4 md:inset-8 z-50 flex flex-col rounded-3xl bg-[#080514]/95 border border-amber-500/40 backdrop-blur-3xl shadow-2xl overflow-hidden"
+              >
+                <button
+                  onClick={() => setIsTaskStudioOpen(false)}
+                  className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+                <AstraTaskStudio />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Model Router Matrix Modal */}
+          <AnimatePresence>
+            {isModelMatrixOpen && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="fixed inset-4 md:inset-8 z-50 flex flex-col rounded-3xl bg-[#080514]/95 border border-amber-500/40 backdrop-blur-3xl shadow-2xl overflow-hidden"
+              >
+                <button
+                  onClick={() => setIsModelMatrixOpen(false)}
+                  className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+                <AstraModelRouterView
+                  selectedModel={selectedModel}
+                  onSelectModel={(m) => {
+                    onSelectModel(m);
+                    setIsModelMatrixOpen(false);
+                  }}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* API & Integrations Center Modal */}
+          <AnimatePresence>
+            {isIntegrationsOpen && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="fixed inset-4 md:inset-8 z-50 flex flex-col rounded-3xl bg-[#080514]/95 border border-amber-500/40 backdrop-blur-3xl shadow-2xl overflow-hidden"
+              >
+                <button
+                  onClick={() => setIsIntegrationsOpen(false)}
+                  className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+                <AstraIntegrations />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Robotics & Wearable HUD Modal */}
+          <AnimatePresence>
+            {isRoboticsOpen && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="fixed inset-4 md:inset-8 z-50 flex flex-col rounded-3xl bg-[#080514]/95 border border-amber-500/40 backdrop-blur-3xl shadow-2xl overflow-hidden"
+              >
+                <button
+                  onClick={() => setIsRoboticsOpen(false)}
+                  className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+                <AstraRoboticsHUD />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Zero-Trust Security Center Modal */}
+          <AnimatePresence>
+            {isSecurityOpen && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="fixed inset-4 md:inset-8 z-50 flex flex-col rounded-3xl bg-[#080514]/95 border border-amber-500/40 backdrop-blur-3xl shadow-2xl overflow-hidden"
+              >
+                <button
+                  onClick={() => setIsSecurityOpen(false)}
+                  className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+                <AstraSecurityCenter />
+              </motion.div>
+            )}
+          </AnimatePresence>
         </main>
 
         {/* BOTTOM FLOATING DOCK BAR */}
@@ -542,21 +662,39 @@ export const AstraDesktopInterface: React.FC<AstraDesktopInterfaceProps> = ({
             </button>
             <div className="h-4 w-px bg-white/15" />
             <button
-              onClick={() => setIsTasksOpen(true)}
+              onClick={() => setIsTaskStudioOpen(true)}
               className="p-1 text-emerald-300 hover:text-emerald-200 flex items-center gap-1.5"
-              title="Open Tasks"
+              title="Open Task Studio"
             >
               <CheckSquare className="w-4 h-4" />
-              <span>Tasks</span>
+              <span>Studio</span>
             </button>
             <div className="h-4 w-px bg-white/15" />
             <button
-              onClick={() => setIsOrbCanvasOpen(true)}
-              className="p-1 text-cyan-300 hover:text-cyan-200 flex items-center gap-1.5"
-              title="Focus 3D Orb"
+              onClick={() => setIsIntegrationsOpen(true)}
+              className="p-1 text-amber-300 hover:text-amber-200 flex items-center gap-1.5"
+              title="Integrations Center"
             >
-              <Eye className="w-4 h-4" />
-              <span>3D Orb</span>
+              <Key className="w-4 h-4" />
+              <span>APIs</span>
+            </button>
+            <div className="h-4 w-px bg-white/15" />
+            <button
+              onClick={() => setIsSecurityOpen(true)}
+              className="p-1 text-blue-300 hover:text-blue-200 flex items-center gap-1.5"
+              title="Zero-Trust Security"
+            >
+              <ShieldCheck className="w-4 h-4" />
+              <span>Security</span>
+            </button>
+            <div className="h-4 w-px bg-white/15" />
+            <button
+              onClick={() => setIsRoboticsOpen(true)}
+              className="p-1 text-purple-300 hover:text-purple-200 flex items-center gap-1.5"
+              title="Robotics & Wearables"
+            >
+              <Bot className="w-4 h-4" />
+              <span>Robotics</span>
             </button>
             <div className="h-4 w-px bg-white/15" />
             <button

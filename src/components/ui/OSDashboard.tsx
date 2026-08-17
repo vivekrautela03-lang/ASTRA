@@ -397,8 +397,8 @@ export const OSDashboard: React.FC<OSDashboardProps> = ({
                           <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-400 border border-cyan-400/30">
                             {mem.category}
                           </span>
-                          <span className="text-[10px] text-white/40">{mem.timestamp}</span>
-                          <span className="text-[10px] text-emerald-400 font-bold">Confidence: {(mem.confidence * 100).toFixed(0)}%</span>
+                          <span className="text-[10px] text-white/40">{mem.timestamp || mem.createdAt}</span>
+                          <span className="text-[10px] text-emerald-400 font-bold">Confidence: {((mem.confidence ?? 1) * 100).toFixed(0)}%</span>
                         </div>
                         <p className="text-xs text-white/90 leading-relaxed">{mem.content}</p>
                         <div className="flex flex-wrap gap-1.5 pt-1">

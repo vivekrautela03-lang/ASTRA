@@ -1,12 +1,12 @@
 export type EvaState = 
   | 'entrance' 
   | 'idle' 
-  | 'listening'
+  | 'listening' 
   | 'thinking' 
   | 'speaking' 
   | 'executing' 
   | 'observing' 
-  | 'analyzing'
+  | 'analyzing' 
   | 'error';
 
 export type AIModelId = 
@@ -20,12 +20,28 @@ export type AIModelId =
 export type AgentRole = 
   | 'coding' 
   | 'research' 
+  | 'creative'
   | 'browser' 
   | 'vision' 
   | 'security' 
   | 'computer_control' 
   | 'workflow' 
-  | 'finance';
+  | 'finance'
+  | 'robotics';
+
+export type NavTabId = 
+  | 'HOME'
+  | 'CHAT'
+  | 'TASKS'
+  | 'PROJECTS'
+  | 'AGENTS'
+  | 'MEMORY'
+  | 'COMPUTER'
+  | 'VISION'
+  | 'INTEGRATIONS'
+  | 'DEVICES'
+  | 'SECURITY'
+  | 'SETTINGS';
 
 export interface SystemSettings {
   soundEnabled: boolean;
@@ -72,7 +88,7 @@ export interface AIAgent {
   id: string;
   name: string;
   role: AgentRole;
-  status: 'idle' | 'running' | 'completed' | 'failed';
+  status: 'idle' | 'running' | 'completed' | 'failed' | 'waiting';
   currentTask?: string;
   progress: number;
   logs: string[];
@@ -82,10 +98,12 @@ export interface AIAgent {
 export interface MemoryItem {
   id: string;
   content: string;
-  category: 'preference' | 'fact' | 'event' | 'code' | 'conversation' | 'action';
-  confidence: number;
-  timestamp: string;
+  category: 'preference' | 'fact' | 'event' | 'code' | 'conversation' | 'action' | 'SHORT_TERM' | 'LONG_TERM' | 'PROJECT' | 'PREFERENCE' | 'SEMANTIC' | 'EPISODIC';
+  confidence?: number;
+  timestamp?: string;
+  createdAt?: string;
   tags: string[];
+  importance?: number;
 }
 
 export interface TerminalLog {
@@ -111,4 +129,37 @@ export interface VisionDetection {
   confidence: number;
   box: { x: number; y: number; width: number; height: number };
   category: string;
+}
+
+export interface IntegrationCard {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  docUrl: string;
+  status: 'Connected' | 'Not Connected' | 'Error';
+  lastChecked?: string;
+}
+
+export interface SecurityAuditEntry {
+  id: string;
+  actionType: string;
+  target: string;
+  agentId: string;
+  status: string;
+  timestamp: string;
+  evaluation?: {
+    risk: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+    level: string;
+    reason: string;
+  };
+}
+
+export interface DeviceTelemetry {
+  id: string;
+  name: string;
+  type: 'Desktop' | 'Mobile' | 'Robotics' | 'Wearable Suit' | 'Helmet';
+  connection: string;
+  status: 'ONLINE' | 'PAIRED' | 'OFFLINE';
+  safetyLevel: 'SAFE' | 'NOMINAL' | 'INTERLOCKED';
 }
