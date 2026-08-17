@@ -21,7 +21,13 @@ app.use('/api', astraCoreRoutes);
 app.use('/api', integrationRoutes);
 app.use('/api', deviceRoutes);
 
-app.get('/', (req, res) => {
+import path from 'path';
+
+// Serve production built UI
+const distPath = path.resolve(process.cwd(), 'dist');
+app.use(express.static(distPath));
+
+app.get('/api', (req, res) => {
   res.json({
     system: 'ASTRA Production AI Operating System Kernel',
     version: '10.0-ultra',
@@ -36,6 +42,13 @@ app.get('/', (req, res) => {
       wsBridge: `ws://localhost:${PORT}/ev-kernel`
     }
   });
+});
+
+app.get('*', (req, res) => {
+  if (req.path.startsWith('/api')) {
+    return res.status(404).json({ error: 'Endpoint not found' });
+  }
+  res.sendFile(path.join(distPath, 'index.html'));
 });
 
 const server = http.createServer(app);
