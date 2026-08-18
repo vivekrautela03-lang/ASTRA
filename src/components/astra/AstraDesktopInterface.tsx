@@ -5,7 +5,7 @@ import {
   FileText, Wrench, Settings as SettingsIcon,
   Mic, Moon, Sparkles, ChevronRight,
   X, Menu, UserCheck, Eye, Plus, Check, Trash2,
-  Database, ShieldCheck, Cpu, Bot, Key
+  Database, ShieldCheck, Cpu, Bot, Key, Globe
 } from 'lucide-react';
 import type { EvaState } from '../../types/eva';
 import { AstraResponse } from './AstraResponse';
@@ -14,6 +14,7 @@ import { AstraOrb } from './AstraOrb';
 import { CameraWidget } from './AstraWidgets/CameraWidget';
 import { KnowledgeRAGWidget } from './AstraWidgets/KnowledgeRAGWidget';
 import { AstraIntegrations } from './AstraIntegrations';
+import { AstraPublicApisView } from './AstraPublicApisView';
 import { AstraSecurityCenter } from './AstraSecurityCenter';
 import { AstraRoboticsHUD } from './AstraRoboticsHUD';
 import { AstraTaskStudio } from './AstraTaskStudio';
@@ -69,6 +70,7 @@ export const AstraDesktopInterface: React.FC<AstraDesktopInterfaceProps> = ({
   const [isTaskStudioOpen, setIsTaskStudioOpen] = useState(false);
   const [isModelMatrixOpen, setIsModelMatrixOpen] = useState(false);
   const [isIntegrationsOpen, setIsIntegrationsOpen] = useState(false);
+  const [isPublicApisOpen, setIsPublicApisOpen] = useState(false);
   const [isRoboticsOpen, setIsRoboticsOpen] = useState(false);
   const [isSecurityOpen, setIsSecurityOpen] = useState(false);
 
@@ -210,6 +212,7 @@ export const AstraDesktopInterface: React.FC<AstraDesktopInterfaceProps> = ({
     { name: 'Task & Workflow Studio', icon: CheckSquare, action: () => setIsTaskStudioOpen(true) },
     { name: 'Model Router Matrix', icon: Cpu, action: () => setIsModelMatrixOpen(true) },
     { name: 'API & Integrations', icon: Key, action: () => setIsIntegrationsOpen(true) },
+    { name: 'Public APIs Master Catalog', icon: Globe, action: () => setIsPublicApisOpen(true) },
     { name: 'Robotics & Hardware HUD', icon: Bot, action: () => setIsRoboticsOpen(true) },
     { name: 'Zero-Trust Security Center', icon: ShieldCheck, action: () => setIsSecurityOpen(true) },
     { name: 'Smart RAG Vault', icon: Wrench, action: () => setIsRAGOpen(true) },
@@ -596,6 +599,26 @@ export const AstraDesktopInterface: React.FC<AstraDesktopInterfaceProps> = ({
                   <X className="w-5 h-5" />
                 </button>
                 <AstraIntegrations />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Public APIs Master Catalog Modal */}
+          <AnimatePresence>
+            {isPublicApisOpen && (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                className="fixed inset-4 md:inset-8 z-50 flex flex-col rounded-3xl bg-[#080514]/95 border border-cyan-500/40 backdrop-blur-3xl shadow-2xl overflow-hidden"
+              >
+                <button
+                  onClick={() => setIsPublicApisOpen(false)}
+                  className="absolute top-4 right-4 z-10 p-2 rounded-full bg-white/10 hover:bg-white/20 text-white"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+                <AstraPublicApisView />
               </motion.div>
             )}
           </AnimatePresence>

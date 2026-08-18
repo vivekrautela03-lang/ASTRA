@@ -19,6 +19,7 @@ import { workflowEngine } from '../workflows/workflowEngine.js';
 import { deviceManager } from '../devices/deviceManager.js';
 import { telemetryService } from '../observability/telemetry.js';
 import { integrationManager } from '../integrations/integrationManager.js';
+import { PublicApisCatalog } from '../integrations/publicApisCatalog.js';
 
 export const gatewayRouter = Router();
 
@@ -162,4 +163,14 @@ gatewayRouter.post('/security/reject', (req, res) => {
 // 13. Observability & Health
 gatewayRouter.get('/observability/health', (req, res) => {
   res.json(telemetryService.getHealth());
+});
+
+// 14. Public APIs Master Catalog & Discovery Endpoints
+gatewayRouter.get('/public-apis', (req, res) => {
+  const { query, category } = req.query;
+  res.json(PublicApisCatalog.listAll(query, category));
+});
+
+gatewayRouter.get('/public-apis/categories', (req, res) => {
+  res.json({ categories: PublicApisCatalog.getCategories() });
 });

@@ -39,6 +39,7 @@ export type NavTabId =
   | 'COMPUTER'
   | 'VISION'
   | 'INTEGRATIONS'
+  | 'PUBLIC_APIS'
   | 'DEVICES'
   | 'SECURITY'
   | 'SETTINGS';
