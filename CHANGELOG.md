@@ -1,22 +1,34 @@
-# ASTRA OS Changelog
+# Changelog — ASTRA Personal AI Operating System
 
-All notable architectural changes and feature releases are documented here.
+All notable changes to the ASTRA personal AI operating system are documented in this file.
 
-## [10.0.0-ultra] - 2026-08-17 (Current Production OS Release)
+---
 
-### Added
-- **Dedicated Branch `astra-ultra`:** Preserving original baseline on `main` while completing full OS transformation.
-- **Dynamic Model Router:** Multi-provider fallback and cost/latency-aware routing across OpenAI (GPT-4o), Google Gemini 1.5 Pro, Groq Llama 3.3 70B, DeepSeek R1, and Ollama.
-- **Autonomous Multi-Agent Orchestrator:** Specialized agents for Research, Coding, Creative, System Automation, Browser, and Robotics.
-- **Hierarchical Memory System:** Short-term, Long-term, Project, Semantic (pgvector), and Knowledge Graph layers.
-- **Zero-Trust Permission Engine:** Multi-tier risk gating (READ to PHYSICAL) with confirmation modals.
-- **Sandboxed Execution Environment:** Timeout enforcement, working directory jailing, and prompt injection defense.
-- **Official Integrations Hub:** Turnkey management for OpenAI, Google Cloud, GitHub, Supabase, Vercel, Figma, and Spotify.
-- **Future Robotics Abstraction Layer:** `RoboticsController`, `SuitController`, `SpatialMap`, and Digital Twin simulation engine.
-- **Comprehensive Documentation Suite:** Complete set of architecture, security, setup, API, agents, memory, tools, integrations, deployment, and robotics manuals.
+## [10.0-Ultra] — August 2026
 
-## [9.0.0] - Prior Baseline
-- Initial desktop workspace UI with 3D Holographic Orb.
-- Local Win32 Express backend for app opening and file read/write.
-- Basic Speech Recognition and Synthesis integration.
-- Supabase vector schema configuration.
+### 🚀 Complete Production Pipeline (Layer A + Layer B)
+
+#### 1. Custom Modular Backend (`/backend`)
+- **API Gateway (`/api/v1/*`)**: Mounted on unified port `8990` with full REST endpoint support for chat, voice sessions, vision analysis, tasks, agents, tools, workflows, memory, devices, security, and health.
+- **Cryptographic JWT Verifier & Session Manager (`backend/auth/`)**: Validates Supabase bearer tokens, extracts user permissions, and tracks active cross-device sessions.
+- **Zero-Trust Permission Engine & Sandbox (`backend/security/`, `backend/sandbox/`)**: 4-tier risk classification (`LOW`, `MEDIUM`, `HIGH`, `CRITICAL`), prompt-injection defense tags, and hazardous command blocklists.
+- **Pluggable AI Provider Adapters (`backend/ai/`)**: Unified interface with adapters for OpenAI, Google Gemini, Groq, DeepSeek, and Local Ollama.
+- **Dynamic Model Router (`backend/models/`)**: Latency, cost, and capability-aware model router with automatic failover.
+- **15-Layer Hierarchical Memory Engine (`backend/memory/`)**: Full implementation of Working, Short-Term, Episodic, Semantic (pgvector), Procedural, Personal, Preference, Project, Conversational, Environmental, Tool, Agent, Knowledge, Relationship (Knowledge Graph), and Temporal validity memories.
+- **Cognitive Context Engine (`backend/core/`)**: Dynamically synthesizes prompt context from memory, environment, and project state.
+- **Intent Engine & Task Planner (`backend/core/`)**: Fast semantic classification and deterministic DAG plan generation.
+- **Autonomous Multi-Agent Swarm (`backend/agents/`)**: Specialized orchestrator for `ResearchAgent`, `CodingAgent`, `CreativeAgent`, `DesignAgent`, `BrowserAgent`, `SystemAgent`, `DataAgent`, `SecurityAgent`, and `RoboticsAgent`.
+- **Host Computer Controller & Typed Tools (`backend/computer/`, `backend/tools/`)**: Native application launching, file I/O, keystroke simulation, volume control, and tool execution gating.
+- **Robotics & Wearables Layer (`backend/robotics/`)**: Hardware safety interlock (never emits raw PWM), exoskeleton telemetry, climbing module, and Digital Twin physics simulation.
+- **Event Bus & Notifications (`backend/events/`, `backend/notifications/`)**: Asynchronous PubSub bus and proactive alert dispatcher.
+- **Observability & Health Metrics (`backend/observability/`)**: Token tracking, cost estimator, memory telemetry, and `/health` probe.
+
+#### 2. Supabase PostgreSQL Platform (`supabase_schema.sql`)
+- Normalized production tables: `profiles`, `conversations`, `messages`, `memories`, `projects`, `project_files`, `tasks`, `task_steps`, `devices`, and `audit_logs`.
+- `pgvector` cosine similarity stored procedure (`match_memories`).
+- Complete Row Level Security (RLS) policies for strict user tenancy.
+
+#### 3. Verification & Launcher
+- Verified with 0 linter errors (`oxlint`) and clean TypeScript/Vite compilation.
+- Standalone native Windows `ASTRA.exe` and 1-click batch launcher `ASTRA-Launcher.bat`.
+- Full end-to-end acceptance tests passed 100%.

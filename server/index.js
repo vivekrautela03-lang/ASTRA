@@ -8,13 +8,27 @@ import integrationRoutes from './routes/integrations.js';
 import deviceRoutes from './routes/devices.js';
 import { setupWebSocket } from './ws/bridge.js';
 
+import { gatewayRouter } from '../backend/core/gateway.js';
+
 const app = express();
 const PORT = process.env.PORT || 8990;
 
 app.use(cors());
 app.use(express.json({ limit: '25mb' }));
 
-// Core API endpoints
+// Full API Gateway v1 Pipeline
+app.use('/api/v1', gatewayRouter);
+
+// Health Endpoint
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'ONLINE',
+    version: '10.0-ultra',
+    timestamp: new Date().toISOString()
+  });
+});
+
+// Legacy backwards-compatible endpoints
 app.use('/api', systemRoutes);
 app.use('/api', automationRoutes);
 app.use('/api', astraCoreRoutes);
