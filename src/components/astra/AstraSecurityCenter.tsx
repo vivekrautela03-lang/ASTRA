@@ -42,11 +42,12 @@ export const AstraSecurityCenter: React.FC = () => {
 
   const fetchSecurityStatus = () => {
     setIsLoading(true);
-    fetch('http://localhost:8990/api/security/audit')
-      .then(res => res.json())
+    fetch('/api/v1/security/audit')
+      .catch(() => fetch('http://localhost:8990/api/v1/security/audit'))
+      .then(res => res && res.json ? res.json() : null)
       .then(data => {
-        if (data.auditLogs?.length) setAuditLogs(data.auditLogs);
-        if (data.pendingRequests) setPendingRequests(data.pendingRequests);
+        if (data?.logs?.length || data?.auditLogs?.length) setAuditLogs(data.logs || data.auditLogs);
+        if (data?.pending || data?.pendingRequests) setPendingRequests(data.pending || data.pendingRequests);
       })
       .catch(() => {})
       .finally(() => setIsLoading(false));
@@ -58,11 +59,15 @@ export const AstraSecurityCenter: React.FC = () => {
 
   const handleApprove = async (id: string) => {
     try {
-      await fetch('http://localhost:8990/api/security/approve', {
+      await fetch('/api/v1/security/approve', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id })
-      });
+      }).catch(() => fetch('http://localhost:8990/api/v1/security/approve', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+      }));
       fetchSecurityStatus();
     } catch {
       setPendingRequests(prev => prev.filter(r => r.id !== id));
@@ -71,11 +76,15 @@ export const AstraSecurityCenter: React.FC = () => {
 
   const handleReject = async (id: string) => {
     try {
-      await fetch('http://localhost:8990/api/security/reject', {
+      await fetch('/api/v1/security/reject', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, reason: 'User rejected action' })
-      });
+        body: JSON.stringify({ id })
+      }).catch(() => fetch('http://localhost:8990/api/v1/security/reject', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+      }));
       fetchSecurityStatus();
     } catch {
       setPendingRequests(prev => prev.filter(r => r.id !== id));

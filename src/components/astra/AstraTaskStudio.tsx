@@ -54,10 +54,11 @@ export const AstraTaskStudio: React.FC = () => {
   const [isDispatching, setIsDispatching] = useState(false);
 
   const fetchTasks = useCallback(() => {
-    fetch('http://localhost:8990/api/tasks')
-      .then(res => res.json())
+    fetch('/api/v1/tasks')
+      .catch(() => fetch('http://localhost:8990/api/v1/tasks'))
+      .then(res => res && res.json ? res.json() : null)
       .then(data => {
-        if (data.tasks?.length) {
+        if (data?.tasks?.length) {
           setTasks(data.tasks);
           if (!selectedTask || !data.tasks.find((t: TaskRecord) => t.id === selectedTask.id)) {
             setSelectedTask(data.tasks[0]);
@@ -77,12 +78,17 @@ export const AstraTaskStudio: React.FC = () => {
 
     setIsDispatching(true);
     try {
-      const res = await fetch('http://localhost:8990/api/agents/run', {
+      const res = await fetch('/api/v1/agents/run', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ goal: newGoalInput.trim(), agentRole: selectedAgentRole })
-      });
-      if (res.ok) {
+      }).catch(() => fetch('http://localhost:8990/api/v1/agents/run', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ goal: newGoalInput.trim(), agentRole: selectedAgentRole })
+      }));
+
+      if (res && res.ok) {
         setNewGoalInput('');
         fetchTasks();
       }

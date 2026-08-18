@@ -94,10 +94,11 @@ export const AstraModelRouterView: React.FC<Props> = ({ selectedModel, onSelectM
 
   const fetchModels = () => {
     setIsLoading(true);
-    fetch('http://localhost:8990/api/settings/models')
-      .then(res => res.json())
+    fetch('/api/settings/models')
+      .catch(() => fetch('http://localhost:8990/api/settings/models'))
+      .then(res => res && res.json ? res.json() : null)
       .then(data => {
-        if (data.models?.length) setModels(data.models);
+        if (data?.models?.length) setModels(data.models);
       })
       .catch(() => {})
       .finally(() => setIsLoading(false));

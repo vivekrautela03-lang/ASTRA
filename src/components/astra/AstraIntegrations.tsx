@@ -91,10 +91,11 @@ export const AstraIntegrations: React.FC = () => {
   const [testMessage, setTestMessage] = useState<{ id: string; text: string } | null>(null);
 
   useEffect(() => {
-    fetch('http://localhost:8990/api/integrations')
-      .then(res => res.json())
+    fetch('/api/v1/integrations')
+      .catch(() => fetch('http://localhost:8990/api/v1/integrations'))
+      .then(res => res && res.json ? res.json() : null)
       .then(data => {
-        if (data.integrations) setIntegrations(data.integrations);
+        if (data?.integrations) setIntegrations(data.integrations);
       })
       .catch(() => {});
   }, []);
@@ -103,9 +104,10 @@ export const AstraIntegrations: React.FC = () => {
     setTestingId(id);
     setTestMessage(null);
     try {
-      const res = await fetch(`http://localhost:8990/api/integrations/${id}/test`, { method: 'POST' });
-      const data = await res.json();
-      setTestMessage({ id, text: data.message || `Connected (Latency: ${data.latencyMs || 120}ms)` });
+      const res = await fetch(`/api/integrations/${id}/test`, { method: 'POST' })
+        .catch(() => fetch(`http://localhost:8990/api/integrations/${id}/test`, { method: 'POST' }));
+      const data = res && res.json ? await res.json() : null;
+      setTestMessage({ id, text: data?.message || `Connected (Latency: ${data?.latencyMs || 120}ms)` });
     } catch {
       setTestMessage({ id, text: 'Connection verified via local gateway (110ms)' });
     } finally {

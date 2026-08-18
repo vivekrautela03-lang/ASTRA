@@ -35,22 +35,27 @@ export const AstraRoboticsHUD: React.FC = () => {
   const [eStopTriggered, setEStopTriggered] = useState(false);
 
   useEffect(() => {
-    fetch('http://localhost:8990/api/devices')
-      .then(res => res.json())
+    fetch('/api/devices')
+      .catch(() => fetch('http://localhost:8990/api/devices'))
+      .then(res => res && res.json ? res.json() : null)
       .then(data => {
-        if (data.roboticsState) setRoboticsState(data.roboticsState);
-        if (data.suitState) setSuitState(data.suitState);
+        if (data?.roboticsState) setRoboticsState(data.roboticsState);
+        if (data?.suitState) setSuitState(data.suitState);
       })
       .catch(() => {});
   }, []);
 
   const handleEStop = async () => {
     try {
-      await fetch('http://localhost:8990/api/devices/dev-robotic-01/command', {
+      await fetch('/api/devices/dev-robotic-01/command', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ command: 'estop' })
-      });
+      }).catch(() => fetch('http://localhost:8990/api/devices/dev-robotic-01/command', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ command: 'estop' })
+      }));
       setEStopTriggered(true);
       setRoboticsState(prev => ({ ...prev, mode: 'EMERGENCY_STOP' }));
     } catch {

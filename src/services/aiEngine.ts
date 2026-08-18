@@ -286,17 +286,22 @@ export class AIEngine {
     if (lower === 'hi' || lower === 'hello' || lower === 'hey' || lower === 'astra' || lower === 'namaste') {
       fullText = voiceVisionEngine.getGreeting();
     } else {
-      // Primary Backend Model Router Execution
+      // Primary Backend Model Router Execution (Layer A Gateway)
       try {
-        const backendRes = await fetch('http://localhost:8990/api/astra/chat', {
+        const backendRes = await fetch('/api/v1/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ prompt, modelId: model })
-        });
-        if (backendRes.ok) {
+        }).catch(() => fetch('http://localhost:8990/api/v1/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ prompt, modelId: model })
+        }));
+
+        if (backendRes && backendRes.ok) {
           const backendData = await backendRes.json();
-          if (backendData.text) {
-            fullText = backendData.text;
+          if (backendData.response || backendData.text) {
+            fullText = backendData.response || backendData.text;
           }
         }
       } catch {
