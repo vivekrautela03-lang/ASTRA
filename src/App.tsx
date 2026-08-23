@@ -11,6 +11,7 @@ import { cameraVisionService } from './services/cameraVisionService';
 import { wakeWordEngine } from './services/wakeWord/wakeWordEngine';
 import { ASTRA_SYSTEM_PHRASES } from './config/astraPersonality';
 import { AstraDesktopInterface } from './components/astra/AstraDesktopInterface';
+import { AstraAssistant } from './components/astra/AstraAssistant';
 
 export const App: React.FC = () => {
   // Global ASTRA state: idle | listening | thinking | speaking
@@ -407,6 +408,9 @@ export const App: React.FC = () => {
         selectedModel={settings.selectedModel}
         onSelectModel={(model) => setSettings((prev: SystemSettings) => ({ ...prev, selectedModel: model as AIModelId }))}
       />
+
+      {/* Global Floating Desktop AI Assistant Overlay */}
+      <AstraAssistant />
     </div>
   );
 };
