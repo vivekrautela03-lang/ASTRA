@@ -1,27 +1,26 @@
 @echo off
-title ASTRA AI Operating System — Quantum Kernel v10.0
+title ASTRA AI Assistant — Native Windows Desktop App
 color 0B
 
 echo =================================================
-echo  ⚡ ASTRA AI OPERATING SYSTEM v10.0-ULTRA
-echo  Starting Kernel and Desktop HUD...
+echo  ⚡ ASTRA NATIVE WINDOWS DESKTOP AI ASSISTANT
+echo  Launching Astra.exe directly...
 echo =================================================
 echo.
 
-:: Check Node.js
-where node >nul 2>nul
-if %errorlevel% neq 0 (
-    color 0C
-    echo [!] Node.js not detected in PATH.
-    echo Please install Node.js (v20+) from https://nodejs.org
-    pause
-    exit /b 1
+if exist "release\win-unpacked\Astra.exe" (
+    echo [✓] Starting packaged Astra.exe...
+    start "" "release\win-unpacked\Astra.exe"
+    exit /b 0
 )
 
-:: Start Backend Kernel & UI directly on Port 8990
-echo [✓] Booting ASTRA Kernel on http://localhost:8990...
-start "" "http://localhost:8990"
+:: Fallback to local electron runtime
+where npx >nul 2>nul
+if %errorlevel% equ 0 (
+    echo [✓] Starting via Electron runtime...
+    start "" npx electron .
+    exit /b 0
+)
 
-node server/index.js
-
+echo [!] Could not locate Astra.exe or npx.
 pause

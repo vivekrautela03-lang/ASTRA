@@ -176,6 +176,10 @@ export function useAstraAssistant(options: UseAstraAssistantOptions = {}) {
   // Open the expanded assistant
   const openAssistant = useCallback((startVoice = false) => {
     setIsOpen(true);
+    if (typeof window !== 'undefined' && window.astra?.desktop?.open) {
+      window.astra.desktop.open();
+    }
+
     if (startVoice) {
       setUiState('listening');
       setStatusMessage('Listening...');
@@ -206,11 +210,18 @@ export function useAstraAssistant(options: UseAstraAssistantOptions = {}) {
     textToSpeechService.stop();
     setIsOpen(false);
     setUiState('idle');
+
+    if (typeof window !== 'undefined' && window.astra?.desktop?.minimize) {
+      window.astra.desktop.minimize();
+    }
   }, [stopAudioListening]);
 
   // Close assistant
   const closeAssistant = useCallback(() => {
     minimizeAssistant();
+    if (typeof window !== 'undefined' && window.astra?.desktop?.close) {
+      window.astra.desktop.close();
+    }
   }, [minimizeAssistant]);
 
   // Toggle voice mode
@@ -226,6 +237,9 @@ export function useAstraAssistant(options: UseAstraAssistantOptions = {}) {
       setStatusMessage('Ask me anything.');
     } else {
       setIsOpen(true);
+      if (typeof window !== 'undefined' && window.astra?.desktop?.open) {
+        window.astra.desktop.open();
+      }
       setUiState('listening');
       setStatusMessage('Listening...');
       startAudioListening().then((success) => {
@@ -245,7 +259,23 @@ export function useAstraAssistant(options: UseAstraAssistantOptions = {}) {
     }
   }, [uiState, isRecording, startAudioListening, stopAudioListening]);
 
-  // Global Keyboard shortcut listener: Ctrl+Space / Cmd+Space / Alt+Space
+  // Electron Global Shortcut listeners
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.astra?.desktop) {
+      const unsubActivate = window.astra.desktop.onGlobalActivate(() => {
+        openAssistant(false);
+      });
+      const unsubListen = window.astra.desktop.onGlobalListen(() => {
+        openAssistant(true);
+      });
+      return () => {
+        if (unsubActivate) unsubActivate();
+        if (unsubListen) unsubListen();
+      };
+    }
+  }, [openAssistant]);
+
+  // Web in-browser Keyboard shortcut listener: Ctrl+Space / Cmd+Space / Alt+Space
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const isCtrlSpace = (e.ctrlKey || e.metaKey) && (e.code === 'Space' || e.key === ' ');
@@ -255,27 +285,10 @@ export function useAstraAssistant(options: UseAstraAssistantOptions = {}) {
         e.preventDefault();
         setIsOpen((prev) => {
           if (!prev) {
-            setTimeout(() => {
-              setUiState('listening');
-              setStatusMessage('Listening...');
-              startAudioListening().then((success) => {
-                if (success) {
-                  speechToTextService.startListening((transcript, isFinal) => {
-                    if (isFinal && transcript.trim()) {
-                      speechToTextService.stopListening();
-                      stopAudioListening();
-                      sendPromptRef.current(transcript.trim());
-                    }
-                  });
-                }
-              });
-            }, 100);
+            openAssistant(true);
             return true;
           } else {
-            stopAudioListening();
-            speechToTextService.stopListening();
-            textToSpeechService.stop();
-            setUiState('idle');
+            minimizeAssistant();
             return false;
           }
         });
@@ -284,7 +297,7 @@ export function useAstraAssistant(options: UseAstraAssistantOptions = {}) {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [startAudioListening, stopAudioListening]);
+  }, [openAssistant, minimizeAssistant]);
 
   return {
     isOpen,
