@@ -17,16 +17,9 @@ export interface AstraOrbProps {
   color?: string;
   state?: AstraOrbState;
   audioLevel?: number;
-  gestureRotation?: { x: number; y: number };
-  gestureScale?: number;
-  gestureIntensityBoost?: number;
   interactive?: boolean;
   showStatusPill?: boolean;
   onClick?: () => void;
-  onPointerDown?: (e: React.PointerEvent) => void;
-  onPointerMove?: (e: React.PointerEvent) => void;
-  onPointerUp?: () => void;
-  onWheel?: (e: React.WheelEvent) => void;
   className?: string;
 }
 
@@ -35,15 +28,8 @@ export const AstraOrb: React.FC<AstraOrbProps> = ({
   color = "#00BFFF",
   state = "IDLE",
   audioLevel = 0,
-  gestureRotation = { x: 0, y: 0 },
-  gestureScale = 1.0,
-  gestureIntensityBoost = 0,
   interactive = true,
   onClick,
-  onPointerDown,
-  onPointerMove,
-  onPointerUp,
-  onWheel,
   className = ""
 }) => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -53,9 +39,6 @@ export const AstraOrb: React.FC<AstraOrbProps> = ({
   const orbMeshRef = useRef<THREE.Mesh | null>(null);
   const audioLevelRef = useRef<number>(audioLevel);
   const stateRef = useRef<AstraOrbState>(state);
-  const gestureRotationRef = useRef<{ x: number; y: number }>(gestureRotation);
-  const gestureScaleRef = useRef<number>(gestureScale);
-  const gestureIntensityBoostRef = useRef<number>(gestureIntensityBoost);
 
   useEffect(() => {
     audioLevelRef.current = audioLevel;
@@ -64,18 +47,6 @@ export const AstraOrb: React.FC<AstraOrbProps> = ({
   useEffect(() => {
     stateRef.current = state;
   }, [state]);
-
-  useEffect(() => {
-    gestureRotationRef.current = gestureRotation;
-  }, [gestureRotation]);
-
-  useEffect(() => {
-    gestureScaleRef.current = gestureScale;
-  }, [gestureScale]);
-
-  useEffect(() => {
-    gestureIntensityBoostRef.current = gestureIntensityBoost;
-  }, [gestureIntensityBoost]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -316,11 +287,6 @@ export const AstraOrb: React.FC<AstraOrbProps> = ({
     lightRef.current = light;
     scene.add(light);
 
-    // Base scale
-    let currentLerpedScale = 1.0;
-    let currentLerpedRotX = 0;
-    let currentLerpedRotY = 0;
-
     // ANIMATION LOOP
     const clock = new THREE.Clock();
     let animationFrameId: number;
@@ -331,9 +297,6 @@ export const AstraOrb: React.FC<AstraOrbProps> = ({
       const time = clock.getElapsedTime();
       const currentAudio = audioLevelRef.current || 0;
       const currentState = String(stateRef.current).toUpperCase();
-      const gRot = gestureRotationRef.current;
-      const gScale = gestureScaleRef.current;
-      const gIntensity = gestureIntensityBoostRef.current;
 
       material.uniforms.uTime.value = time;
       material.uniforms.uAudio.value = THREE.MathUtils.lerp(
@@ -344,22 +307,22 @@ export const AstraOrb: React.FC<AstraOrbProps> = ({
 
       // State-specific behavior
       let targetSpeed = 0.35;
-      let targetIntensity = 1.7 + gIntensity;
+      let targetIntensity = 1.7;
       let targetColor = new THREE.Color(color);
       let targetParticleColor = new THREE.Color("#63D8FF");
 
       if (currentState.includes("LISTEN")) {
         targetSpeed = 0.65;
-        targetIntensity = 2.2 + currentAudio * 1.5 + gIntensity;
+        targetIntensity = 2.2 + currentAudio * 1.5;
         targetColor = new THREE.Color("#00E5FF");
       } else if (currentState.includes("THINK") || currentState.includes("PROCESS")) {
         targetSpeed = 0.95;
-        targetIntensity = 2.4 + gIntensity;
+        targetIntensity = 2.4;
         targetColor = new THREE.Color("#8A2BE2");
         targetParticleColor = new THREE.Color("#D8B4FE");
       } else if (currentState.includes("SPEAK")) {
         targetSpeed = 0.55;
-        targetIntensity = 2.1 + currentAudio * 1.8 + gIntensity;
+        targetIntensity = 2.1 + currentAudio * 1.8;
         targetColor = new THREE.Color("#00BFFF");
       } else if (currentState.includes("ERROR")) {
         targetSpeed = 0.2;
@@ -387,25 +350,17 @@ export const AstraOrb: React.FC<AstraOrbProps> = ({
         );
       }
 
-      // Smooth Gesture Scale & Rotation Interpolation
-      currentLerpedScale = THREE.MathUtils.lerp(currentLerpedScale, gScale, 0.1);
-      currentLerpedRotX = THREE.MathUtils.lerp(currentLerpedRotX, gRot.x, 0.1);
-      currentLerpedRotY = THREE.MathUtils.lerp(currentLerpedRotY, gRot.y, 0.1);
-
-      orb.scale.setScalar(currentLerpedScale);
-      particles.scale.setScalar(currentLerpedScale);
-
-      // Smooth 3D Rotation with Gesture Overrides
-      orb.rotation.y = time * 0.08 * (targetSpeed / 0.35) + currentLerpedRotY;
-      orb.rotation.x = Math.sin(time * 0.2) * 0.08 + currentLerpedRotX;
+      // Smooth Organic Rotation
+      orb.rotation.y = time * 0.08 * (targetSpeed / 0.35);
+      orb.rotation.x = Math.sin(time * 0.2) * 0.08;
 
       // Particle Movement
-      particles.rotation.y = time * 0.12 * (targetSpeed / 0.35) + currentLerpedRotY * 1.2;
-      particles.rotation.x = time * 0.035 + currentLerpedRotX * 1.2;
+      particles.rotation.y = time * 0.12 * (targetSpeed / 0.35);
+      particles.rotation.x = time * 0.035;
 
       // Dynamic Breathing Light
       light.intensity =
-        (2.2 + Math.sin(time * 1.5) * 0.6 + currentAudio * 1.5 + gIntensity) * currentLerpedScale;
+        2.2 + Math.sin(time * 1.5) * 0.6 + currentAudio * 1.5;
       light.color.lerp(targetColor, 0.05);
 
       renderer.render(scene, camera);
@@ -431,17 +386,12 @@ export const AstraOrb: React.FC<AstraOrbProps> = ({
     <div
       ref={containerRef}
       onClick={onClick}
-      onPointerDown={onPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
-      onWheel={onWheel}
       style={{
         width: `${size}px`,
         height: `${size}px`,
-        cursor: interactive ? "grab" : "default",
-        touchAction: "none"
+        cursor: interactive ? "pointer" : "default",
       }}
-      className={`relative flex items-center justify-center select-none active:cursor-grabbing ${className}`}
+      className={`relative flex items-center justify-center select-none ${className}`}
     />
   );
 };

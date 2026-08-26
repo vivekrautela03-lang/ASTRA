@@ -12,7 +12,6 @@ import { LiquidGlassBackground } from '../components/astra/LiquidGlassBackground
 import { useAstraState } from '../hooks/useAstraState';
 import { useVoice } from '../hooks/useVoice';
 import { useCamera } from '../hooks/useCamera';
-import { useHandGestures } from '../hooks/useHandGestures';
 import { aiEngine } from '../services/aiEngine';
 import { AstraSecurityCenter } from '../components/astra/AstraSecurityCenter';
 import { AstraRoboticsHUD } from '../components/astra/AstraRoboticsHUD';
@@ -44,25 +43,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   // Camera Vision Hook
   const camera = useCamera();
 
-  // Hand Gestures 3D Spatial Engine Hook
-  const {
-    gestureData,
-    registerVideoElement,
-    handlePointerDown,
-    handlePointerMove,
-    handlePointerUp,
-    handleWheel
-  } = useHandGestures(camera.isActive);
-
-  // Link camera video element to gesture tracker
-  const handleBindVideo = useCallback(
-    (el: HTMLVideoElement | null) => {
-      camera.bindVideoRef(el);
-      registerVideoElement(el);
-    },
-    [camera, registerVideoElement]
-  );
-
   const sendPromptRef = useRef<(text: string) => Promise<void>>(async () => {});
   const voiceSpeakRef = useRef<(text: string, onEnd?: () => void) => void>(() => {});
 
@@ -92,7 +72,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         const actions: ChatMessage['actions'] = [];
         const lower = query.toLowerCase();
 
-        if (lower.includes('camera') || lower.includes('vision') || lower.includes('gesture') || lower.includes('zoom')) {
+        if (lower.includes('camera') || lower.includes('vision') || lower.includes('video') || lower.includes('ar')) {
           actions.push({
             label: camera.isActive ? 'Disable AR Camera' : 'Enable AR Camera',
             variant: 'primary',
@@ -197,7 +177,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
           isActive={camera.isActive}
           hasPermission={camera.hasPermission}
           onEnableCamera={camera.startCamera}
-          bindVideoRef={handleBindVideo}
+          bindVideoRef={camera.bindVideoRef}
         />
       ) : (
         <LiquidGlassBackground />
@@ -267,23 +247,16 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
               <VoiceVisualizer
                 state={state}
                 audioLevel={voice.audioLevel}
-                size={Math.round(440 * gestureData.scale)}
+                size={440}
               />
 
-              {/* Three.js Living AI Energy Orb with 3D Hand Gesture Manipulation */}
+              {/* Three.js Living AI Energy Orb */}
               <AstraOrb
-                size={Math.round(380 * gestureData.scale)}
+                size={380}
                 color="#00BFFF"
                 state={state}
                 audioLevel={voice.audioLevel}
-                gestureRotation={gestureData.rotation}
-                gestureScale={gestureData.scale}
-                gestureIntensityBoost={gestureData.intensityBoost}
                 onClick={toggleVoiceMode}
-                onPointerDown={handlePointerDown}
-                onPointerMove={handlePointerMove}
-                onPointerUp={handlePointerUp}
-                onWheel={handleWheel}
               />
             </div>
 
