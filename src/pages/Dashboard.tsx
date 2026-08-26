@@ -9,7 +9,6 @@ import { CommandBar } from '../components/astra/CommandBar';
 import { QuickCommands } from '../components/astra/QuickCommands';
 import { CameraBackground } from '../components/astra/CameraBackground';
 import { LiquidGlassBackground } from '../components/astra/LiquidGlassBackground';
-import { GestureHUD } from '../components/astra/GestureHUD';
 import { useAstraState } from '../hooks/useAstraState';
 import { useVoice } from '../hooks/useVoice';
 import { useCamera } from '../hooks/useCamera';
@@ -48,14 +47,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   // Hand Gestures 3D Spatial Engine Hook
   const {
     gestureData,
-    isTrackingEnabled,
-    setIsTrackingEnabled,
     registerVideoElement,
     handlePointerDown,
     handlePointerMove,
     handlePointerUp,
-    handleWheel,
-    resetTransform
+    handleWheel
   } = useHandGestures(camera.isActive);
 
   // Link camera video element to gesture tracker
@@ -235,7 +231,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         <SystemPanel
           currentMode={
             camera.isActive
-              ? 'Hand Gesture Vision AR'
+              ? 'AR Vision Engine'
               : activeTab === 'robotics'
               ? 'Robotics Engine'
               : activeTab === 'security'
@@ -290,15 +286,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
                 onWheel={handleWheel}
               />
             </div>
-
-            {/* Spatial Gesture Feedback HUD */}
-            <GestureHUD
-              gestureData={gestureData}
-              isTracking={isTrackingEnabled}
-              onToggleTracking={() => setIsTrackingEnabled(!isTrackingEnabled)}
-              onReset={resetTransform}
-              className="mt-1 mb-2"
-            />
 
             {/* Orb Status Indicator with Official Logo */}
             <div className="flex flex-col items-center gap-2 mb-2">
