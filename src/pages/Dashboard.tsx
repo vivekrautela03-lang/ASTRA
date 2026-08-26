@@ -7,6 +7,7 @@ import { SystemPanel } from '../components/astra/SystemPanel';
 import { ChatPanel, type ChatMessage } from '../components/astra/ChatPanel';
 import { CommandBar } from '../components/astra/CommandBar';
 import { QuickCommands } from '../components/astra/QuickCommands';
+import { LiquidGlassBackground } from '../components/astra/LiquidGlassBackground';
 import { useAstraState } from '../hooks/useAstraState';
 import { useVoice } from '../hooks/useVoice';
 import { aiEngine } from '../services/aiEngine';
@@ -157,7 +158,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   };
 
   return (
-    <div className="relative w-screen h-screen bg-[#000000] bg-pitch-black text-[#E6F7FF] overflow-hidden flex flex-col font-sans select-none">
+    <div className="relative w-screen h-screen bg-[#000000] text-[#E6F7FF] overflow-hidden flex flex-col font-sans select-none">
+      {/* 0. Dynamic Liquid Glass Background Layer */}
+      <LiquidGlassBackground />
+
       {/* 1. Liquid Glass Top Navigation Bar */}
       <TopBar
         soundEnabled={soundEnabled}

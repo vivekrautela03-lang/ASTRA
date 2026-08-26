@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Sparkles, ArrowRight, ShieldCheck, Mail } from 'lucide-react';
 import AstraOrb from './AstraOrb';
+import LiquidGlassBackground from './LiquidGlassBackground';
 
 interface AstraLoginProps {
   onAuthenticate: (user: { email: string; name: string }) => void;
@@ -23,7 +24,10 @@ export const AstraLogin: React.FC<AstraLoginProps> = ({ onAuthenticate }) => {
   };
 
   return (
-    <div className="relative w-screen h-screen bg-[#000000] bg-pitch-black overflow-hidden flex flex-col items-center justify-center select-none">
+    <div className="relative w-screen h-screen bg-[#000000] overflow-hidden flex flex-col items-center justify-center select-none">
+      {/* Dynamic Liquid Glass Background Layer */}
+      <LiquidGlassBackground />
+
       {/* Centerpiece Astra Energy Orb */}
       <div className="relative z-10 flex flex-col items-center justify-center">
         <div
