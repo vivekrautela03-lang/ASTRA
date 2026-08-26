@@ -10,7 +10,7 @@ export const App: React.FC = () => {
   });
 
   return (
-    <div className="relative w-full h-screen bg-[#030712] text-[#E6F7FF] overflow-hidden select-none">
+    <div className="relative w-full h-screen bg-[#000000] bg-pitch-black text-[#E6F7FF] overflow-hidden select-none">
       {currentUser ? (
         <Dashboard user={currentUser} onLogout={() => setCurrentUser(null)} />
       ) : (

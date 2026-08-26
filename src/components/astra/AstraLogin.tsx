@@ -23,10 +23,7 @@ export const AstraLogin: React.FC<AstraLoginProps> = ({ onAuthenticate }) => {
   };
 
   return (
-    <div className="relative w-screen h-screen bg-[#030712] overflow-hidden flex flex-col items-center justify-center select-none">
-      {/* Background Animated Atmosphere */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(0,191,255,0.08)_0%,transparent_70%)] pointer-events-none" />
-
+    <div className="relative w-screen h-screen bg-[#000000] bg-pitch-black overflow-hidden flex flex-col items-center justify-center select-none">
       {/* Centerpiece Astra Energy Orb */}
       <div className="relative z-10 flex flex-col items-center justify-center">
         <div
@@ -43,8 +40,8 @@ export const AstraLogin: React.FC<AstraLoginProps> = ({ onAuthenticate }) => {
 
         {/* Booting Sequence HUD */}
         {isBooting ? (
-          <div className="flex flex-col items-center gap-3 mt-4 animate-in fade-in zoom-in duration-500">
-            <div className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-cyan-950/40 border border-cyan-500/40 text-cyan-300 text-xs font-mono tracking-widest shadow-[0_0_20px_rgba(0,191,255,0.35)]">
+          <div className="flex flex-col items-center gap-3.5 mt-4 animate-in fade-in zoom-in duration-500">
+            <div className="flex items-center gap-2.5 px-5 py-2 rounded-full liquid-glass-pill text-cyan-300 text-xs font-mono tracking-widest shadow-[0_0_25px_rgba(0,191,255,0.4)]">
               <Sparkles className="w-3.5 h-3.5 animate-spin" />
               <span>
                 {bootPhase === 'expanding'
@@ -52,7 +49,7 @@ export const AstraLogin: React.FC<AstraLoginProps> = ({ onAuthenticate }) => {
                   : 'ASTRA CORE ONLINE • WELCOME'}
               </span>
             </div>
-            <div className="w-48 h-1 bg-white/10 rounded-full overflow-hidden">
+            <div className="w-52 h-1.5 bg-white/10 rounded-full overflow-hidden liquid-glass-card">
               <div
                 className={`h-full bg-gradient-to-r from-cyan-400 to-blue-500 transition-all duration-1000 ${
                   bootPhase === 'expanding' ? 'w-2/3' : 'w-full'
@@ -61,13 +58,13 @@ export const AstraLogin: React.FC<AstraLoginProps> = ({ onAuthenticate }) => {
             </div>
           </div>
         ) : (
-          /* Login Card Experience */
-          <div className="flex flex-col items-center gap-6 mt-2 max-w-sm w-full px-6 z-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <div className="flex flex-col items-center text-center gap-1">
+          /* Liquid Glass Login Card Experience */
+          <div className="flex flex-col items-center gap-6 mt-2 max-w-sm w-full p-8 rounded-3xl liquid-glass z-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <div className="flex flex-col items-center text-center gap-1.5">
               <h1 className="text-3xl font-extrabold tracking-[0.3em] text-transparent bg-clip-text bg-gradient-to-r from-white via-cyan-100 to-[#00BFFF]">
                 ASTRA
               </h1>
-              <p className="text-xs font-mono tracking-wider text-[#6B8299]">
+              <p className="text-xs font-mono tracking-wider text-white/50">
                 Your Intelligent Personal Interface
               </p>
             </div>
@@ -89,7 +86,7 @@ export const AstraLogin: React.FC<AstraLoginProps> = ({ onAuthenticate }) => {
               <button
                 type="button"
                 onClick={() => handleStartBoot('user@google.com', 'Google User')}
-                className="w-full py-3 px-4 rounded-2xl bg-white/[0.04] hover:bg-white/10 text-white/90 border border-white/10 text-xs font-medium flex items-center justify-center gap-2.5 transition-all"
+                className="w-full py-3 px-4 rounded-2xl liquid-glass-chip text-white/90 text-xs font-medium flex items-center justify-center gap-2.5 transition-all"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24">
                   <path
@@ -116,7 +113,7 @@ export const AstraLogin: React.FC<AstraLoginProps> = ({ onAuthenticate }) => {
               <button
                 type="button"
                 onClick={() => handleStartBoot('developer@enterprise.io', 'Enterprise User')}
-                className="w-full py-3 px-4 rounded-2xl bg-white/[0.04] hover:bg-white/10 text-white/90 border border-white/10 text-xs font-medium flex items-center justify-center gap-2.5 transition-all"
+                className="w-full py-3 px-4 rounded-2xl liquid-glass-chip text-white/90 text-xs font-medium flex items-center justify-center gap-2.5 transition-all"
               >
                 <Mail className="w-4 h-4 text-cyan-400" />
                 <span>Continue with Email</span>
@@ -124,7 +121,7 @@ export const AstraLogin: React.FC<AstraLoginProps> = ({ onAuthenticate }) => {
             </div>
 
             {/* Footer Trust Indicator */}
-            <div className="flex items-center gap-1.5 text-[10px] font-mono text-[#6B8299]">
+            <div className="flex items-center gap-1.5 text-[10px] font-mono text-white/40">
               <ShieldCheck className="w-3.5 h-3.5 text-cyan-400" />
               <span>Quantum-Encrypted Neural Session</span>
             </div>

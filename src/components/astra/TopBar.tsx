@@ -22,23 +22,23 @@ export const TopBar: React.FC<TopBarProps> = ({
 
   const notifications = [
     { id: 1, title: 'Neural Core Synchronized', time: 'Just now' },
-    { id: 2, title: 'Autonomous Sandbox Active', time: '2m ago' },
+    { id: 2, title: 'Liquid Glass Interface Active', time: '1m ago' },
     { id: 3, title: 'Public APIs Catalog Loaded (1,400+ endpoints)', time: '5m ago' }
   ];
 
   return (
-    <header className={`w-full flex items-center justify-between px-6 py-4 z-40 bg-gradient-to-b from-[#030712]/90 to-transparent backdrop-blur-md border-b border-cyan-500/10 select-none ${className}`}>
+    <header className={`w-full flex items-center justify-between px-8 py-4 z-40 bg-black/40 backdrop-blur-2xl border-b border-white/[0.08] select-none liquid-rim ${className}`}>
       {/* 1. Left Brand Identity */}
-      <div className="flex items-center gap-3">
-        <div className="relative flex items-center justify-center w-8 h-8 rounded-xl bg-cyan-500/10 border border-cyan-500/30 shadow-[0_0_15px_rgba(0,191,255,0.25)]">
+      <div className="flex items-center gap-3.5">
+        <div className="relative flex items-center justify-center w-9 h-9 rounded-2xl liquid-glass-card shadow-[0_0_20px_rgba(0,191,255,0.3)]">
           <Sparkles className="w-4 h-4 text-[#00BFFF] animate-pulse" />
         </div>
         <div className="flex flex-col">
           <div className="flex items-center gap-2">
-            <span className="font-extrabold tracking-[0.25em] text-sm text-transparent bg-clip-text bg-gradient-to-r from-white via-cyan-100 to-[#00BFFF]">
+            <span className="font-extrabold tracking-[0.28em] text-sm text-transparent bg-clip-text bg-gradient-to-r from-white via-cyan-100 to-[#00BFFF]">
               ASTRA
             </span>
-            <span className="text-[10px] px-1.5 py-0.5 rounded bg-cyan-500/10 text-cyan-400 border border-cyan-500/20 font-mono">
+            <span className="text-[10px] px-2 py-0.5 rounded-full liquid-glass-pill text-cyan-300 font-mono">
               v10.0
             </span>
           </div>
@@ -51,7 +51,7 @@ export const TopBar: React.FC<TopBarProps> = ({
       {/* 2. Center/Right Navigation & Status */}
       <div className="flex items-center gap-4">
         {/* Connection Indicator */}
-        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#050f1e]/80 border border-cyan-500/20 shadow-[0_0_15px_rgba(0,191,255,0.15)]">
+        <div className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-full liquid-glass-pill shadow-[0_0_20px_rgba(0,191,255,0.2)]">
           <div className="relative flex items-center justify-center w-2 h-2">
             <div className="w-2 h-2 rounded-full bg-[#00BFFF] animate-ping absolute" />
             <div className="w-1.5 h-1.5 rounded-full bg-[#00BFFF]" />
@@ -62,13 +62,13 @@ export const TopBar: React.FC<TopBarProps> = ({
         </div>
 
         {/* Action Controls */}
-        <div className="flex items-center gap-1.5 bg-[#050f1e]/60 border border-cyan-500/15 rounded-xl p-1 backdrop-blur-xl">
+        <div className="flex items-center gap-1.5 liquid-glass-card rounded-2xl p-1">
           {/* Sound Toggle */}
           <button
             type="button"
             onClick={onToggleSound}
             title={soundEnabled ? 'Mute voice feedback' : 'Enable voice feedback'}
-            className="p-2 rounded-lg text-[#6B8299] hover:text-cyan-300 hover:bg-cyan-500/10 transition-colors"
+            className="p-2 rounded-xl text-white/70 hover:text-cyan-300 hover:bg-white/10 transition-all"
           >
             {soundEnabled ? <Volume2 className="w-4 h-4 text-cyan-400" /> : <VolumeX className="w-4 h-4" />}
           </button>
@@ -82,21 +82,21 @@ export const TopBar: React.FC<TopBarProps> = ({
                 if (onOpenNotifications) onOpenNotifications();
               }}
               title="System Notifications"
-              className="p-2 rounded-lg text-[#6B8299] hover:text-cyan-300 hover:bg-cyan-500/10 transition-colors relative"
+              className="p-2 rounded-xl text-white/70 hover:text-cyan-300 hover:bg-white/10 transition-all relative"
             >
               <Bell className="w-4 h-4" />
               <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-cyan-400" />
             </button>
 
             {showNotifs && (
-              <div className="absolute right-0 mt-2 w-72 p-3 rounded-2xl bg-[#050f1e]/95 border border-cyan-500/30 backdrop-blur-2xl shadow-[0_10px_30px_rgba(0,0,0,0.8)] z-50 animate-in fade-in slide-in-from-top-2">
-                <div className="flex items-center justify-between pb-2 border-b border-cyan-500/15 text-xs font-mono text-cyan-300">
+              <div className="absolute right-0 mt-3 w-80 p-3.5 rounded-3xl liquid-glass shadow-[0_20px_50px_rgba(0,0,0,0.9)] z-50 animate-in fade-in slide-in-from-top-2">
+                <div className="flex items-center justify-between pb-2.5 border-b border-white/10 text-xs font-mono text-cyan-300">
                   <span>TELEMETRY FEED</span>
-                  <span className="text-[10px] text-[#6B8299]">3 NEW</span>
+                  <span className="text-[10px] text-white/50">3 NEW</span>
                 </div>
-                <div className="flex flex-col gap-2 mt-2">
+                <div className="flex flex-col gap-2 mt-2.5">
                   {notifications.map((n) => (
-                    <div key={n.id} className="p-2 rounded-xl bg-cyan-950/20 border border-cyan-500/10 flex items-start gap-2">
+                    <div key={n.id} className="p-2.5 rounded-2xl liquid-glass-card flex items-start gap-2.5">
                       <CheckCircle2 className="w-3.5 h-3.5 text-cyan-400 shrink-0 mt-0.5" />
                       <div className="flex flex-col">
                         <span className="text-xs text-white/90 font-sans">{n.title}</span>
@@ -114,16 +114,16 @@ export const TopBar: React.FC<TopBarProps> = ({
             type="button"
             onClick={onOpenSettings}
             title="System Settings"
-            className="p-2 rounded-lg text-[#6B8299] hover:text-cyan-300 hover:bg-cyan-500/10 transition-colors"
+            className="p-2 rounded-xl text-white/70 hover:text-cyan-300 hover:bg-white/10 transition-all"
           >
             <Settings className="w-4 h-4" />
           </button>
         </div>
 
         {/* User Profile Avatar */}
-        <div className="flex items-center gap-2 pl-2 border-l border-cyan-500/15" title={userEmail || 'Operator'}>
-          <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-cyan-600 to-blue-500 flex items-center justify-center text-white text-xs font-bold shadow-[0_0_12px_rgba(0,191,255,0.3)]">
-            <User className="w-4 h-4" />
+        <div className="flex items-center gap-2 pl-2 border-l border-white/10" title={userEmail || 'Operator'}>
+          <div className="w-9 h-9 rounded-2xl liquid-glass-card flex items-center justify-center text-white text-xs font-bold shadow-[0_0_15px_rgba(0,191,255,0.3)]">
+            <User className="w-4 h-4 text-cyan-300" />
           </div>
         </div>
       </div>

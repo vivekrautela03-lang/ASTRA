@@ -31,7 +31,7 @@ export const QuickCommands: React.FC<QuickCommandsProps> = ({
   ];
 
   return (
-    <div className={`flex flex-wrap items-center justify-center gap-2 select-none ${className}`}>
+    <div className={`flex flex-wrap items-center justify-center gap-2.5 select-none ${className}`}>
       {chips.map((chip, idx) => {
         const Icon = chip.icon;
         return (
@@ -39,7 +39,7 @@ export const QuickCommands: React.FC<QuickCommandsProps> = ({
             key={idx}
             type="button"
             onClick={() => onSelectCommand(chip.prompt)}
-            className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#050f1e]/60 hover:bg-cyan-500/15 border border-cyan-500/20 hover:border-cyan-500/40 text-xs font-sans text-white/80 hover:text-cyan-200 backdrop-blur-xl transition-all shadow-[0_4px_12px_rgba(0,0,0,0.4)] active:scale-95"
+            className="flex items-center gap-2 px-4 py-2 rounded-full liquid-glass-chip text-xs font-sans text-white/90 hover:text-cyan-200 active:scale-95"
           >
             <Icon className="w-3.5 h-3.5 text-cyan-400" />
             <span>{chip.label}</span>

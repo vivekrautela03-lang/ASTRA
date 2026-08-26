@@ -54,11 +54,11 @@ export const SideBar: React.FC<SideBarProps> = ({
     <aside
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className={`fixed left-6 top-1/2 -translate-y-1/2 z-40 flex flex-col gap-2 p-2 rounded-2xl bg-[#050f1e]/75 border border-cyan-500/20 backdrop-blur-2xl shadow-[0_15px_35px_rgba(0,0,0,0.6)] transition-all duration-300 select-none ${
-        isHovered ? 'w-48' : 'w-14'
+      className={`fixed left-6 top-1/2 -translate-y-1/2 z-40 flex flex-col gap-2 p-2.5 rounded-3xl liquid-glass transition-all duration-300 select-none ${
+        isHovered ? 'w-52' : 'w-16'
       } ${className}`}
     >
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1.5">
         {items.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
@@ -68,16 +68,16 @@ export const SideBar: React.FC<SideBarProps> = ({
               key={item.id}
               type="button"
               onClick={() => onSelectTab(item.id as SidebarTab)}
-              className={`flex items-center gap-3 w-full p-2.5 rounded-xl text-xs font-medium transition-all ${
+              className={`flex items-center gap-3 w-full p-3 rounded-2xl text-xs font-medium transition-all ${
                 isActive
-                  ? 'bg-gradient-to-r from-cyan-500/20 to-blue-500/10 text-cyan-300 border border-cyan-500/30 shadow-[0_0_15px_rgba(0,191,255,0.2)]'
-                  : 'text-[#6B8299] hover:text-white hover:bg-white/5 border border-transparent'
+                  ? 'liquid-glass-pill text-cyan-300 shadow-[0_0_20px_rgba(0,191,255,0.35)] font-semibold'
+                  : 'text-white/60 hover:text-white hover:bg-white/[0.06]'
               }`}
             >
               <div className="relative shrink-0 flex items-center justify-center">
                 <Icon className={`w-4 h-4 transition-transform ${isActive ? 'scale-110 text-cyan-300' : ''}`} />
                 {isActive && (
-                  <span className="absolute -top-1 -right-1 w-1.5 h-1.5 rounded-full bg-[#00BFFF]" />
+                  <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[#00BFFF] shadow-[0_0_8px_#00BFFF]" />
                 )}
               </div>
 

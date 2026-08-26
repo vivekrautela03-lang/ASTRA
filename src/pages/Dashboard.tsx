@@ -157,11 +157,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   };
 
   return (
-    <div className="relative w-screen h-screen bg-[#030712] text-[#E6F7FF] overflow-hidden flex flex-col font-sans select-none">
-      {/* Background Animated Atmosphere */}
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_45%,rgba(0,191,255,0.06)_0%,transparent_65%)] pointer-events-none" />
-
-      {/* 1. Top Navigation Bar */}
+    <div className="relative w-screen h-screen bg-[#000000] bg-pitch-black text-[#E6F7FF] overflow-hidden flex flex-col font-sans select-none">
+      {/* 1. Liquid Glass Top Navigation Bar */}
       <TopBar
         soundEnabled={soundEnabled}
         onToggleSound={() => {
@@ -174,7 +171,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
 
       {/* 2. Main Center Workspace */}
       <main className="relative flex-1 flex flex-col items-center justify-between px-6 pb-6 pt-2 z-10 overflow-hidden">
-        {/* Left Side Dock */}
+        {/* Liquid Glass Left Side Dock */}
         <SideBar
           activeTab={activeTab}
           onSelectTab={(tab) => {
@@ -183,7 +180,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
           }}
         />
 
-        {/* Right Collapsible System Panel */}
+        {/* Liquid Glass Right Collapsible System Panel */}
         <SystemPanel
           currentMode={
             activeTab === 'robotics'
@@ -231,11 +228,11 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
             </div>
 
             {/* Orb Status Indicator */}
-            <div className="flex flex-col items-center gap-1 -mt-4 mb-3">
+            <div className="flex flex-col items-center gap-1.5 -mt-4 mb-3">
               <span className="font-extrabold tracking-[0.3em] text-xs text-transparent bg-clip-text bg-gradient-to-r from-white via-cyan-100 to-[#00BFFF]">
                 ASTRA
               </span>
-              <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#050f1e]/80 border border-cyan-500/25 shadow-[0_0_15px_rgba(0,191,255,0.2)]">
+              <div className="flex items-center gap-2 px-4 py-1.5 rounded-full liquid-glass-pill shadow-[0_0_20px_rgba(0,191,255,0.25)]">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#00BFFF] animate-ping" />
                 <span className="text-[10px] font-mono tracking-widest text-cyan-300 font-semibold">
                   {statusText}
@@ -243,7 +240,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
               </div>
             </div>
 
-            {/* Floating Glassmorphism Conversation HUD */}
+            {/* Floating Liquid Glass Conversation HUD */}
             <ChatPanel
               messages={messages}
               currentResponse={currentResponse}
@@ -254,10 +251,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
 
         {/* 3. Bottom Controls */}
         <div className="w-full max-w-3xl flex flex-col items-center gap-3 mt-auto">
-          {/* Quick Command Chips */}
+          {/* Liquid Glass Quick Command Chips */}
           <QuickCommands onSelectCommand={(cmd) => handleProcessPrompt(cmd)} />
 
-          {/* Futuristic Command Bar */}
+          {/* Futuristic Liquid Glass Command Bar */}
           <CommandBar
             onSend={(text) => handleProcessPrompt(text)}
             onToggleVoice={toggleVoiceMode}
