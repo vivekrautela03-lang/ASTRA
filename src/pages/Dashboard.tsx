@@ -9,9 +9,11 @@ import { CommandBar } from '../components/astra/CommandBar';
 import { QuickCommands } from '../components/astra/QuickCommands';
 import { CameraBackground } from '../components/astra/CameraBackground';
 import { LiquidGlassBackground } from '../components/astra/LiquidGlassBackground';
+import { GestureHUD } from '../components/astra/GestureHUD';
 import { useAstraState } from '../hooks/useAstraState';
 import { useVoice } from '../hooks/useVoice';
 import { useCamera } from '../hooks/useCamera';
+import { useHandGestures } from '../hooks/useHandGestures';
 import { aiEngine } from '../services/aiEngine';
 import { AstraSecurityCenter } from '../components/astra/AstraSecurityCenter';
 import { AstraRoboticsHUD } from '../components/astra/AstraRoboticsHUD';
@@ -43,6 +45,28 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   // Camera Vision Hook
   const camera = useCamera();
 
+  // Hand Gestures 3D Spatial Engine Hook
+  const {
+    gestureData,
+    isTrackingEnabled,
+    setIsTrackingEnabled,
+    registerVideoElement,
+    handlePointerDown,
+    handlePointerMove,
+    handlePointerUp,
+    handleWheel,
+    resetTransform
+  } = useHandGestures(camera.isActive);
+
+  // Link camera video element to gesture tracker
+  const handleBindVideo = useCallback(
+    (el: HTMLVideoElement | null) => {
+      camera.bindVideoRef(el);
+      registerVideoElement(el);
+    },
+    [camera, registerVideoElement]
+  );
+
   const sendPromptRef = useRef<(text: string) => Promise<void>>(async () => {});
   const voiceSpeakRef = useRef<(text: string, onEnd?: () => void) => void>(() => {});
 
@@ -72,7 +96,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         const actions: ChatMessage['actions'] = [];
         const lower = query.toLowerCase();
 
-        if (lower.includes('camera') || lower.includes('vision') || lower.includes('video') || lower.includes('ar')) {
+        if (lower.includes('camera') || lower.includes('vision') || lower.includes('gesture') || lower.includes('zoom')) {
           actions.push({
             label: camera.isActive ? 'Disable AR Camera' : 'Enable AR Camera',
             variant: 'primary',
@@ -177,7 +201,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
           isActive={camera.isActive}
           hasPermission={camera.hasPermission}
           onEnableCamera={camera.startCamera}
-          bindVideoRef={camera.bindVideoRef}
+          bindVideoRef={handleBindVideo}
         />
       ) : (
         <LiquidGlassBackground />
@@ -211,7 +235,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         <SystemPanel
           currentMode={
             camera.isActive
-              ? 'AR Vision Engine'
+              ? 'Hand Gesture Vision AR'
               : activeTab === 'robotics'
               ? 'Robotics Engine'
               : activeTab === 'security'
@@ -244,26 +268,46 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
             {/* Center Orb & Circular Waveform */}
             <div className="relative flex items-center justify-center -mt-6">
               {/* Circular Audio Waveform */}
-              <VoiceVisualizer state={state} audioLevel={voice.audioLevel} size={440} />
+              <VoiceVisualizer
+                state={state}
+                audioLevel={voice.audioLevel}
+                size={Math.round(440 * gestureData.scale)}
+              />
 
-              {/* Three.js Living AI Energy Orb */}
+              {/* Three.js Living AI Energy Orb with 3D Hand Gesture Manipulation */}
               <AstraOrb
-                size={380}
+                size={Math.round(380 * gestureData.scale)}
                 color="#00BFFF"
                 state={state}
                 audioLevel={voice.audioLevel}
+                gestureRotation={gestureData.rotation}
+                gestureScale={gestureData.scale}
+                gestureIntensityBoost={gestureData.intensityBoost}
                 onClick={toggleVoiceMode}
+                onPointerDown={handlePointerDown}
+                onPointerMove={handlePointerMove}
+                onPointerUp={handlePointerUp}
+                onWheel={handleWheel}
               />
             </div>
 
+            {/* Spatial Gesture Feedback HUD */}
+            <GestureHUD
+              gestureData={gestureData}
+              isTracking={isTrackingEnabled}
+              onToggleTracking={() => setIsTrackingEnabled(!isTrackingEnabled)}
+              onReset={resetTransform}
+              className="mt-1 mb-2"
+            />
+
             {/* Orb Status Indicator with Official Logo */}
-            <div className="flex flex-col items-center gap-2 -mt-4 mb-3">
+            <div className="flex flex-col items-center gap-2 mb-2">
               <img
                 src="./astra-logo.jpg"
                 alt="ASTRA AI Personal Assistant"
-                className="h-10 w-auto object-contain filter drop-shadow-[0_0_20px_rgba(0,191,255,0.4)]"
+                className="h-9 w-auto object-contain filter drop-shadow-[0_0_20px_rgba(0,191,255,0.4)]"
               />
-              <div className="flex items-center gap-2 px-4 py-1.5 rounded-full liquid-glass-pill shadow-[0_0_20px_rgba(0,191,255,0.25)]">
+              <div className="flex items-center gap-2 px-4 py-1 rounded-full liquid-glass-pill shadow-[0_0_20px_rgba(0,191,255,0.25)]">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#00BFFF] animate-ping" />
                 <span className="text-[10px] font-mono tracking-widest text-cyan-300 font-semibold">
                   {statusText}
@@ -275,7 +319,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
             <ChatPanel
               messages={messages}
               currentResponse={currentResponse}
-              className="mb-2"
+              className="mb-1"
             />
           </div>
         )}
