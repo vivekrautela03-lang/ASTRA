@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { Bell, Settings, Volume2, VolumeX, User, CheckCircle2 } from 'lucide-react';
+import { Bell, Settings, Volume2, VolumeX, Camera, CameraOff, User, CheckCircle2 } from 'lucide-react';
 
 interface TopBarProps {
   soundEnabled: boolean;
   onToggleSound: () => void;
+  cameraActive?: boolean;
+  onToggleCamera?: () => void;
   onOpenSettings: () => void;
   onOpenNotifications?: () => void;
   userEmail?: string | null;
@@ -13,6 +15,8 @@ interface TopBarProps {
 export const TopBar: React.FC<TopBarProps> = ({
   soundEnabled,
   onToggleSound,
+  cameraActive = false,
+  onToggleCamera,
   onOpenSettings,
   onOpenNotifications,
   userEmail = 'Operator',
@@ -22,7 +26,7 @@ export const TopBar: React.FC<TopBarProps> = ({
 
   const notifications = [
     { id: 1, title: 'Neural Core Synchronized', time: 'Just now' },
-    { id: 2, title: 'Liquid Glass Interface Active', time: '1m ago' },
+    { id: 2, title: 'AR Camera Vision Active', time: '1m ago' },
     { id: 3, title: 'Public APIs Catalog Loaded (1,400+ endpoints)', time: '5m ago' }
   ];
 
@@ -42,6 +46,14 @@ export const TopBar: React.FC<TopBarProps> = ({
 
       {/* 2. Center/Right Navigation & Status */}
       <div className="flex items-center gap-4">
+        {/* AR Camera Indicator */}
+        {cameraActive && (
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full liquid-glass-pill text-emerald-300 text-xs font-mono shadow-[0_0_15px_rgba(16,185,129,0.3)]">
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span>AR CAM ONLINE</span>
+          </div>
+        )}
+
         {/* Connection Indicator */}
         <div className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-full liquid-glass-pill shadow-[0_0_20px_rgba(0,191,255,0.2)]">
           <div className="relative flex items-center justify-center w-2 h-2">
@@ -55,6 +67,22 @@ export const TopBar: React.FC<TopBarProps> = ({
 
         {/* Action Controls */}
         <div className="flex items-center gap-1.5 liquid-glass-card rounded-2xl p-1">
+          {/* Camera AR Toggle */}
+          {onToggleCamera && (
+            <button
+              type="button"
+              onClick={onToggleCamera}
+              title={cameraActive ? 'Disable Camera AR Background' : 'Enable Camera AR Background'}
+              className={`p-2 rounded-xl transition-all ${
+                cameraActive
+                  ? 'text-emerald-400 bg-emerald-500/10 shadow-[0_0_12px_rgba(16,185,129,0.3)]'
+                  : 'text-white/70 hover:text-cyan-300 hover:bg-white/10'
+              }`}
+            >
+              {cameraActive ? <Camera className="w-4 h-4" /> : <CameraOff className="w-4 h-4" />}
+            </button>
+          )}
+
           {/* Sound Toggle */}
           <button
             type="button"

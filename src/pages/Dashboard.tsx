@@ -7,9 +7,11 @@ import { SystemPanel } from '../components/astra/SystemPanel';
 import { ChatPanel, type ChatMessage } from '../components/astra/ChatPanel';
 import { CommandBar } from '../components/astra/CommandBar';
 import { QuickCommands } from '../components/astra/QuickCommands';
+import { CameraBackground } from '../components/astra/CameraBackground';
 import { LiquidGlassBackground } from '../components/astra/LiquidGlassBackground';
 import { useAstraState } from '../hooks/useAstraState';
 import { useVoice } from '../hooks/useVoice';
+import { useCamera } from '../hooks/useCamera';
 import { aiEngine } from '../services/aiEngine';
 import { AstraSecurityCenter } from '../components/astra/AstraSecurityCenter';
 import { AstraRoboticsHUD } from '../components/astra/AstraRoboticsHUD';
@@ -37,6 +39,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [selectedModel, setSelectedModel] = useState<AIModelId>('llama-3-70b');
+
+  // Camera Vision Hook
+  const camera = useCamera();
 
   const sendPromptRef = useRef<(text: string) => Promise<void>>(async () => {});
   const voiceSpeakRef = useRef<(text: string, onEnd?: () => void) => void>(() => {});
@@ -67,6 +72,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         const actions: ChatMessage['actions'] = [];
         const lower = query.toLowerCase();
 
+        if (lower.includes('camera') || lower.includes('vision') || lower.includes('video') || lower.includes('ar')) {
+          actions.push({
+            label: camera.isActive ? 'Disable AR Camera' : 'Enable AR Camera',
+            variant: 'primary',
+            onClick: () => camera.toggleCamera()
+          });
+        }
         if (lower.includes('robot') || lower.includes('suit') || lower.includes('telemetry')) {
           actions.push({
             label: 'Open Robotics HUD',
@@ -129,7 +141,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         setTimeout(() => setAstraState('IDLE'), 3000);
       }
     },
-    [setAstraState, soundEnabled, selectedModel]
+    [setAstraState, soundEnabled, selectedModel, camera]
   );
 
   useEffect(() => {
@@ -159,8 +171,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
 
   return (
     <div className="relative w-screen h-screen bg-[#000000] text-[#E6F7FF] overflow-hidden flex flex-col font-sans select-none">
-      {/* 0. Dynamic Liquid Glass Background Layer */}
-      <LiquidGlassBackground />
+      {/* 0. Live Camera AR Background Layer */}
+      {camera.isActive ? (
+        <CameraBackground
+          isActive={camera.isActive}
+          hasPermission={camera.hasPermission}
+          onEnableCamera={camera.startCamera}
+          bindVideoRef={camera.bindVideoRef}
+        />
+      ) : (
+        <LiquidGlassBackground />
+      )}
 
       {/* 1. Liquid Glass Top Navigation Bar */}
       <TopBar
@@ -169,6 +190,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
           if (soundEnabled) voice.stopSpeaking();
           setSoundEnabled(!soundEnabled);
         }}
+        cameraActive={camera.isActive}
+        onToggleCamera={camera.toggleCamera}
         onOpenSettings={() => setShowSettings(true)}
         userEmail={user.email}
       />
@@ -187,7 +210,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         {/* Liquid Glass Right Collapsible System Panel */}
         <SystemPanel
           currentMode={
-            activeTab === 'robotics'
+            camera.isActive
+              ? 'AR Vision Engine'
+              : activeTab === 'robotics'
               ? 'Robotics Engine'
               : activeTab === 'security'
               ? 'Security Shield'
