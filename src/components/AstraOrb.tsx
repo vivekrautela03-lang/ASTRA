@@ -1,3 +1,3 @@
-import { AstraOrb } from './astra/AstraOrb';
+import AstraOrb from "./astra/AstraOrb";
 export default AstraOrb;
 export { AstraOrb };
