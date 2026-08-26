@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Bell, Settings, Volume2, VolumeX, Camera, CameraOff, User, CheckCircle2 } from 'lucide-react';
+import { AstraLogo } from './AstraLogo';
 
 interface TopBarProps {
   soundEnabled: boolean;
@@ -32,14 +33,10 @@ export const TopBar: React.FC<TopBarProps> = ({
 
   return (
     <header className={`w-full flex items-center justify-between px-8 py-3.5 z-40 bg-black/40 backdrop-blur-2xl border-b border-white/[0.08] select-none liquid-rim ${className}`}>
-      {/* 1. Left Brand Identity with Official Logo */}
+      {/* 1. Left Brand Identity with Pure Transparent Logo */}
       <div className="flex items-center gap-3">
-        <img
-          src="./astra-logo.jpg"
-          alt="ASTRA AI Personal Assistant"
-          className="h-9 w-auto object-contain rounded-lg filter drop-shadow-[0_0_15px_rgba(0,191,255,0.3)] transition-all hover:scale-105"
-        />
-        <span className="text-[10px] px-2 py-0.5 rounded-full liquid-glass-pill text-cyan-300 font-mono tracking-wider">
+        <AstraLogo size="sm" align="left" showSubtitle={true} />
+        <span className="text-[10px] px-2 py-0.5 rounded-full liquid-glass-pill text-cyan-300 font-mono tracking-wider ml-1">
           v10.0
         </span>
       </div>

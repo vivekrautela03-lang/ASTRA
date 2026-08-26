@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Sparkles, ArrowRight, ShieldCheck, Mail } from 'lucide-react';
 import AstraOrb from './AstraOrb';
 import LiquidGlassBackground from './LiquidGlassBackground';
+import { AstraLogo } from './AstraLogo';
 
 interface AstraLoginProps {
   onAuthenticate: (user: { email: string; name: string }) => void;
@@ -62,15 +63,9 @@ export const AstraLogin: React.FC<AstraLoginProps> = ({ onAuthenticate }) => {
             </div>
           </div>
         ) : (
-          /* Liquid Glass Login Card Experience */
+          /* Liquid Glass Login Card Experience with Pure Transparent Logo */
           <div className="flex flex-col items-center gap-6 mt-2 max-w-sm w-full p-8 rounded-3xl liquid-glass z-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <div className="flex flex-col items-center text-center gap-1.5">
-              <img
-                src="./astra-logo.jpg"
-                alt="ASTRA AI Personal Assistant"
-                className="h-12 w-auto object-contain filter drop-shadow-[0_0_25px_rgba(0,191,255,0.45)]"
-              />
-            </div>
+            <AstraLogo size="lg" align="center" showSubtitle={true} />
 
             {/* Actions */}
             <div className="w-full flex flex-col gap-3">

@@ -9,6 +9,7 @@ import { CommandBar } from '../components/astra/CommandBar';
 import { QuickCommands } from '../components/astra/QuickCommands';
 import { CameraBackground } from '../components/astra/CameraBackground';
 import { LiquidGlassBackground } from '../components/astra/LiquidGlassBackground';
+import { AstraLogo } from '../components/astra/AstraLogo';
 import { useAstraState } from '../hooks/useAstraState';
 import { useVoice } from '../hooks/useVoice';
 import { useCamera } from '../hooks/useCamera';
@@ -260,13 +261,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
               />
             </div>
 
-            {/* Orb Status Indicator with Official Logo */}
+            {/* Orb Status Indicator with Pure Transparent Text Logo */}
             <div className="flex flex-col items-center gap-2 mb-2">
-              <img
-                src="./astra-logo.jpg"
-                alt="ASTRA AI Personal Assistant"
-                className="h-9 w-auto object-contain filter drop-shadow-[0_0_20px_rgba(0,191,255,0.4)]"
-              />
+              <AstraLogo size="md" align="center" showSubtitle={true} />
               <div className="flex items-center gap-2 px-4 py-1 rounded-full liquid-glass-pill shadow-[0_0_20px_rgba(0,191,255,0.25)]">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#00BFFF] animate-ping" />
                 <span className="text-[10px] font-mono tracking-widest text-cyan-300 font-semibold">
