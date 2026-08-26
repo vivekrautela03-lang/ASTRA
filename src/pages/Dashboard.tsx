@@ -5,7 +5,9 @@ import { TopBar } from '../components/astra/TopBar';
 import { SideBar, type SidebarTab } from '../components/astra/SideBar';
 import { SystemPanel } from '../components/astra/SystemPanel';
 import type { ChatMessage } from '../components/astra/ChatPanel';
-import { AstraChatBox } from '../components/astra/AstraChatBox';
+import { CommandBar } from '../components/astra/CommandBar';
+import { QuickCommands } from '../components/astra/QuickCommands';
+import { AstraChatScreen } from '../components/astra/AstraChatScreen';
 import { CameraBackground } from '../components/astra/CameraBackground';
 import { LiquidGlassBackground } from '../components/astra/LiquidGlassBackground';
 import { AstraLogo } from '../components/astra/AstraLogo';
@@ -27,16 +29,9 @@ interface DashboardProps {
 
 export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   const { state, statusText, setAstraState } = useAstraState('IDLE');
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: 'welcome',
-      sender: 'astra',
-      text: `ASTRA AI Operating System v10.0 Online. Standing by for your directives, ${user.name || 'Boss'}.`
-    }
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [currentResponse] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<SidebarTab>('chat');
-  const [isChatOpen, setIsChatOpen] = useState(true);
+  const [activeTab, setActiveTab] = useState<SidebarTab>('voice'); // Default to Voice/Living Orb Screen
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [selectedModel, setSelectedModel] = useState<AIModelId>('llama-3-70b');
@@ -52,9 +47,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
     async (promptText: string) => {
       const query = promptText.trim();
       if (!query) return;
-
-      // Auto-open chat box on prompt
-      setIsChatOpen(true);
 
       // 1. Append User Message
       const userMsg: ChatMessage = {
@@ -166,6 +158,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
       voice.stopListening();
       setAstraState('IDLE');
     } else {
+      setActiveTab('voice');
       setAstraState('LISTENING');
       voice.startListening().then((ok) => {
         if (!ok) setAstraState('ERROR', 'MICROPHONE ACCESS REQUIRED');
@@ -176,10 +169,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   const handleSelectSidebarTab = (tab: SidebarTab) => {
     if (tab === 'settings') {
       setShowSettings(true);
-    } else if (tab === 'chat') {
-      setActiveTab('chat');
-      setIsChatOpen(true);
     } else if (tab === 'voice') {
+      setActiveTab('voice');
       toggleVoiceMode();
     } else {
       setActiveTab(tab);
@@ -224,22 +215,36 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         {/* Liquid Glass Right Collapsible System Panel */}
         <SystemPanel
           currentMode={
-            camera.isActive
+            activeTab === 'chat'
+              ? 'Conversational HUD'
+              : camera.isActive
               ? 'AR Vision Engine'
               : activeTab === 'robotics'
               ? 'Robotics Engine'
               : activeTab === 'security'
               ? 'Security Shield'
-              : 'Assistant'
+              : 'Assistant Voice Mode'
           }
-          onManageMemory={() => {
-            setActiveTab('chat');
-            setIsChatOpen(true);
-          }}
+          onManageMemory={() => setActiveTab('chat')}
         />
 
-        {/* Dynamic Center View Switching */}
-        {activeTab === 'robotics' ? (
+        {/* Mode Switching: Full Chat Screen vs Voice Living Orb vs Other HUDs */}
+        {activeTab === 'chat' ? (
+          /* ===================================================
+             MODE A: Full Dedicated ChatGPT / Gemini Style Chat
+             =================================================== */
+          <div className="w-full h-full flex items-center justify-center animate-in fade-in zoom-in-95 duration-300">
+            <AstraChatScreen
+              messages={messages}
+              currentResponse={currentResponse}
+              onSend={(text) => handleProcessPrompt(text)}
+              onToggleVoice={toggleVoiceMode}
+              isRecording={voice.isRecording}
+              state={state}
+              onNewChat={() => setMessages([])}
+            />
+          </div>
+        ) : activeTab === 'robotics' ? (
           <div className="w-full max-w-4xl h-[70vh] my-auto overflow-y-auto astra-scrollbar animate-in fade-in zoom-in-95">
             <AstraRoboticsHUD />
           </div>
@@ -256,54 +261,58 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
             <AstraTaskStudio />
           </div>
         ) : (
-          /* Central Living AI Energy Orb Experience */
-          <div className="relative flex-1 flex flex-col items-center justify-center w-full max-w-4xl">
+          /* ===================================================
+             MODE B: Voice Mode / Living AI Energy Orb Experience
+             =================================================== */
+          <div className="relative flex-1 flex flex-col items-center justify-between w-full max-w-4xl h-full animate-in fade-in zoom-in-95 duration-300">
             {/* Center Orb & Circular Waveform */}
-            <div className={`relative flex items-center justify-center transition-all duration-500 ${isChatOpen ? '-mt-12 scale-90' : '-mt-4 scale-100'}`}>
-              {/* Circular Audio Waveform */}
-              <VoiceVisualizer
-                state={state}
-                audioLevel={voice.audioLevel}
-                size={isChatOpen ? 390 : 440}
-              />
+            <div className="relative flex-1 flex flex-col items-center justify-center -mt-4">
+              <div className="relative flex items-center justify-center">
+                {/* Circular Audio Waveform */}
+                <VoiceVisualizer
+                  state={state}
+                  audioLevel={voice.audioLevel}
+                  size={460}
+                />
 
-              {/* Three.js Living AI Energy Orb */}
-              <AstraOrb
-                size={isChatOpen ? 330 : 380}
-                color="#00BFFF"
-                state={state}
-                audioLevel={voice.audioLevel}
-                onClick={toggleVoiceMode}
-              />
+                {/* Three.js Living AI Energy Orb */}
+                <AstraOrb
+                  size={400}
+                  color="#00BFFF"
+                  state={state}
+                  audioLevel={voice.audioLevel}
+                  onClick={toggleVoiceMode}
+                />
+              </div>
+
+              {/* Orb Status Indicator with Pure Transparent Text Logo */}
+              <div className="flex flex-col items-center gap-2 mt-1 mb-2">
+                <AstraLogo size="md" align="center" showSubtitle={true} />
+                <div className="flex items-center gap-2 px-4 py-1.5 rounded-full liquid-glass-pill shadow-[0_0_20px_rgba(0,191,255,0.25)]">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#00BFFF] animate-ping" />
+                  <span className="text-[10px] font-mono tracking-widest text-cyan-300 font-semibold">
+                    {statusText}
+                  </span>
+                </div>
+              </div>
             </div>
 
-            {/* Orb Status Indicator with Pure Transparent Text Logo */}
-            <div className="flex flex-col items-center gap-2 mb-2">
-              <AstraLogo size={isChatOpen ? "sm" : "md"} align="center" showSubtitle={true} />
-              <div className="flex items-center gap-2 px-4 py-1 rounded-full liquid-glass-pill shadow-[0_0_20px_rgba(0,191,255,0.25)]">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#00BFFF] animate-ping" />
-                <span className="text-[10px] font-mono tracking-widest text-cyan-300 font-semibold">
-                  {statusText}
-                </span>
-              </div>
+            {/* Bottom Controls for Voice Mode */}
+            <div className="w-full max-w-3xl flex flex-col items-center gap-3 mt-auto mb-2">
+              {/* Liquid Glass Quick Command Chips */}
+              <QuickCommands onSelectCommand={(cmd) => handleProcessPrompt(cmd)} />
+
+              {/* Futuristic Liquid Glass Command Bar */}
+              <CommandBar
+                onSend={(text) => handleProcessPrompt(text)}
+                onToggleVoice={toggleVoiceMode}
+                isRecording={voice.isRecording}
+                state={state}
+                onToggleChat={() => setActiveTab('chat')}
+              />
             </div>
           </div>
         )}
-
-        {/* 3. Bottom Anchored Liquid Glass Chat HUD & Command Bar */}
-        <div className="w-full flex flex-col items-center mt-auto z-20">
-          <AstraChatBox
-            isOpen={isChatOpen}
-            onClose={() => setIsChatOpen(false)}
-            messages={messages}
-            currentResponse={currentResponse}
-            onSend={(text) => handleProcessPrompt(text)}
-            onToggleVoice={toggleVoiceMode}
-            isRecording={voice.isRecording}
-            state={state}
-            onClearHistory={() => setMessages([])}
-          />
-        </div>
       </main>
 
       {/* Settings Modal */}
