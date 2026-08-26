@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { Dashboard } from './pages/Dashboard';
 import { AstraLogin } from './components/astra/AstraLogin';
-import { AstraAssistant } from './components/astra/AstraAssistant';
 
 export const App: React.FC = () => {
   const [currentUser, setCurrentUser] = useState<{ email: string; name: string } | null>({
@@ -16,9 +15,6 @@ export const App: React.FC = () => {
       ) : (
         <AstraLogin onAuthenticate={(user) => setCurrentUser(user)} />
       )}
-
-      {/* Global Floating Assistant Layer */}
-      <AstraAssistant />
     </div>
   );
 };
