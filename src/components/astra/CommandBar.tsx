@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Mic, Send, Sparkles, Square } from 'lucide-react';
+import { Mic, Send, Sparkles, Square, MessageSquare } from 'lucide-react';
 import type { AstraOrbState } from './AstraOrb';
 
 interface CommandBarProps {
@@ -8,6 +8,8 @@ interface CommandBarProps {
   isRecording: boolean;
   state: AstraOrbState;
   disabled?: boolean;
+  onToggleChat?: () => void;
+  isChatOpen?: boolean;
   className?: string;
 }
 
@@ -17,6 +19,8 @@ export const CommandBar: React.FC<CommandBarProps> = ({
   isRecording,
   state,
   disabled = false,
+  onToggleChat,
+  isChatOpen = false,
   className = ''
 }) => {
   const [input, setInput] = useState('');
@@ -46,24 +50,31 @@ export const CommandBar: React.FC<CommandBarProps> = ({
     <div className={`w-full max-w-3xl flex flex-col items-center gap-2 select-none ${className}`}>
       <form
         onSubmit={handleSubmit}
-        className={`w-full relative flex items-center gap-3.5 px-6 py-4 rounded-3xl liquid-glass-input transition-all duration-300 ${
+        className={`w-full relative flex items-center gap-3.5 px-6 py-3.5 rounded-3xl liquid-glass-input transition-all duration-300 ${
           isListening
             ? 'border-2 border-[#00BFFF] shadow-[0_0_35px_rgba(0,191,255,0.5)] ring-2 ring-cyan-500/30'
             : ''
         }`}
       >
-        {/* Left Indicator */}
-        <div className="flex items-center justify-center shrink-0">
+        {/* Left Indicator / Chat HUD toggle button */}
+        <button
+          type="button"
+          onClick={onToggleChat}
+          title={isChatOpen ? 'Minimize Chat HUD' : 'Open Chat HUD'}
+          className="flex items-center justify-center shrink-0 p-1.5 rounded-xl hover:bg-white/10 text-cyan-300 transition-colors"
+        >
           {isListening ? (
             <div className="flex items-center gap-1">
               <span className="w-1.5 h-4 bg-cyan-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
               <span className="w-1.5 h-6 bg-cyan-300 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
               <span className="w-1.5 h-3 bg-cyan-500 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
             </div>
+          ) : isChatOpen ? (
+            <MessageSquare className="w-4 h-4 text-[#00BFFF]" />
           ) : (
-            <Sparkles className="w-4 h-4 text-cyan-400/80" />
+            <Sparkles className="w-4 h-4 text-cyan-400/90 hover:scale-110 transition-transform" />
           )}
-        </div>
+        </button>
 
         {/* Text Input Area */}
         <textarea
@@ -88,7 +99,7 @@ export const CommandBar: React.FC<CommandBarProps> = ({
             type="button"
             onClick={onToggleVoice}
             title={isListening ? 'Stop listening' : 'Start voice mode'}
-            className={`p-3 rounded-2xl transition-all flex items-center justify-center ${
+            className={`p-2.5 rounded-2xl transition-all flex items-center justify-center ${
               isListening
                 ? 'bg-rose-500/20 text-rose-300 border border-rose-500/50 shadow-[0_0_20px_rgba(244,63,94,0.5)] animate-pulse'
                 : 'liquid-glass-pill text-cyan-300 hover:scale-105 active:scale-95'
@@ -102,7 +113,7 @@ export const CommandBar: React.FC<CommandBarProps> = ({
             type="submit"
             disabled={!input.trim() || disabled}
             title="Send directive (Enter)"
-            className={`p-3 rounded-2xl transition-all flex items-center justify-center ${
+            className={`p-2.5 rounded-2xl transition-all flex items-center justify-center ${
               input.trim() && !disabled
                 ? 'bg-gradient-to-r from-[#00BFFF] to-blue-600 text-white shadow-[0_0_20px_rgba(0,191,255,0.55)] hover:brightness-110 active:scale-95'
                 : 'bg-white/[0.04] text-white/30 cursor-not-allowed border border-white/[0.06]'

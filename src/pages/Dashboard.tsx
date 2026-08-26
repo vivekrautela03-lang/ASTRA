@@ -4,9 +4,8 @@ import { VoiceVisualizer } from '../components/astra/VoiceVisualizer';
 import { TopBar } from '../components/astra/TopBar';
 import { SideBar, type SidebarTab } from '../components/astra/SideBar';
 import { SystemPanel } from '../components/astra/SystemPanel';
-import { ChatPanel, type ChatMessage } from '../components/astra/ChatPanel';
-import { CommandBar } from '../components/astra/CommandBar';
-import { QuickCommands } from '../components/astra/QuickCommands';
+import type { ChatMessage } from '../components/astra/ChatPanel';
+import { AstraChatBox } from '../components/astra/AstraChatBox';
 import { CameraBackground } from '../components/astra/CameraBackground';
 import { LiquidGlassBackground } from '../components/astra/LiquidGlassBackground';
 import { AstraLogo } from '../components/astra/AstraLogo';
@@ -37,6 +36,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   ]);
   const [currentResponse] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<SidebarTab>('chat');
+  const [isChatOpen, setIsChatOpen] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [selectedModel, setSelectedModel] = useState<AIModelId>('llama-3-70b');
@@ -52,6 +52,9 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
     async (promptText: string) => {
       const query = promptText.trim();
       if (!query) return;
+
+      // Auto-open chat box on prompt
+      setIsChatOpen(true);
 
       // 1. Append User Message
       const userMsg: ChatMessage = {
@@ -170,6 +173,19 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
     }
   };
 
+  const handleSelectSidebarTab = (tab: SidebarTab) => {
+    if (tab === 'settings') {
+      setShowSettings(true);
+    } else if (tab === 'chat') {
+      setActiveTab('chat');
+      setIsChatOpen(true);
+    } else if (tab === 'voice') {
+      toggleVoiceMode();
+    } else {
+      setActiveTab(tab);
+    }
+  };
+
   return (
     <div className="relative w-screen h-screen bg-[#000000] text-[#E6F7FF] overflow-hidden flex flex-col font-sans select-none">
       {/* 0. Live Camera AR Background Layer */}
@@ -202,10 +218,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         {/* Liquid Glass Left Side Dock */}
         <SideBar
           activeTab={activeTab}
-          onSelectTab={(tab) => {
-            if (tab === 'settings') setShowSettings(true);
-            else setActiveTab(tab);
-          }}
+          onSelectTab={handleSelectSidebarTab}
         />
 
         {/* Liquid Glass Right Collapsible System Panel */}
@@ -219,7 +232,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
               ? 'Security Shield'
               : 'Assistant'
           }
-          onManageMemory={() => setActiveTab('chat')}
+          onManageMemory={() => {
+            setActiveTab('chat');
+            setIsChatOpen(true);
+          }}
         />
 
         {/* Dynamic Center View Switching */}
@@ -243,17 +259,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
           /* Central Living AI Energy Orb Experience */
           <div className="relative flex-1 flex flex-col items-center justify-center w-full max-w-4xl">
             {/* Center Orb & Circular Waveform */}
-            <div className="relative flex items-center justify-center -mt-6">
+            <div className={`relative flex items-center justify-center transition-all duration-500 ${isChatOpen ? '-mt-12 scale-90' : '-mt-4 scale-100'}`}>
               {/* Circular Audio Waveform */}
               <VoiceVisualizer
                 state={state}
                 audioLevel={voice.audioLevel}
-                size={440}
+                size={isChatOpen ? 390 : 440}
               />
 
               {/* Three.js Living AI Energy Orb */}
               <AstraOrb
-                size={380}
+                size={isChatOpen ? 330 : 380}
                 color="#00BFFF"
                 state={state}
                 audioLevel={voice.audioLevel}
@@ -263,7 +279,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
 
             {/* Orb Status Indicator with Pure Transparent Text Logo */}
             <div className="flex flex-col items-center gap-2 mb-2">
-              <AstraLogo size="md" align="center" showSubtitle={true} />
+              <AstraLogo size={isChatOpen ? "sm" : "md"} align="center" showSubtitle={true} />
               <div className="flex items-center gap-2 px-4 py-1 rounded-full liquid-glass-pill shadow-[0_0_20px_rgba(0,191,255,0.25)]">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#00BFFF] animate-ping" />
                 <span className="text-[10px] font-mono tracking-widest text-cyan-300 font-semibold">
@@ -271,27 +287,21 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
                 </span>
               </div>
             </div>
-
-            {/* Floating Liquid Glass Conversation HUD */}
-            <ChatPanel
-              messages={messages}
-              currentResponse={currentResponse}
-              className="mb-1"
-            />
           </div>
         )}
 
-        {/* 3. Bottom Controls */}
-        <div className="w-full max-w-3xl flex flex-col items-center gap-3 mt-auto">
-          {/* Liquid Glass Quick Command Chips */}
-          <QuickCommands onSelectCommand={(cmd) => handleProcessPrompt(cmd)} />
-
-          {/* Futuristic Liquid Glass Command Bar */}
-          <CommandBar
+        {/* 3. Bottom Anchored Liquid Glass Chat HUD & Command Bar */}
+        <div className="w-full flex flex-col items-center mt-auto z-20">
+          <AstraChatBox
+            isOpen={isChatOpen}
+            onClose={() => setIsChatOpen(false)}
+            messages={messages}
+            currentResponse={currentResponse}
             onSend={(text) => handleProcessPrompt(text)}
             onToggleVoice={toggleVoiceMode}
             isRecording={voice.isRecording}
             state={state}
+            onClearHistory={() => setMessages([])}
           />
         </div>
       </main>
