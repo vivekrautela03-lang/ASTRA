@@ -65,12 +65,11 @@ export const AstraLogin: React.FC<AstraLoginProps> = ({ onAuthenticate }) => {
           /* Liquid Glass Login Card Experience */
           <div className="flex flex-col items-center gap-6 mt-2 max-w-sm w-full p-8 rounded-3xl liquid-glass z-20 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <div className="flex flex-col items-center text-center gap-1.5">
-              <h1 className="text-3xl font-extrabold tracking-[0.3em] text-transparent bg-clip-text bg-gradient-to-r from-white via-cyan-100 to-[#00BFFF]">
-                ASTRA
-              </h1>
-              <p className="text-xs font-mono tracking-wider text-white/50">
-                Your Intelligent Personal Interface
-              </p>
+              <img
+                src="./astra-logo.jpg"
+                alt="ASTRA AI Personal Assistant"
+                className="h-12 w-auto object-contain filter drop-shadow-[0_0_25px_rgba(0,191,255,0.45)]"
+              />
             </div>
 
             {/* Actions */}

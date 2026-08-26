@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, Bell, Settings, Volume2, VolumeX, User, CheckCircle2 } from 'lucide-react';
+import { Bell, Settings, Volume2, VolumeX, User, CheckCircle2 } from 'lucide-react';
 
 interface TopBarProps {
   soundEnabled: boolean;
@@ -27,25 +27,17 @@ export const TopBar: React.FC<TopBarProps> = ({
   ];
 
   return (
-    <header className={`w-full flex items-center justify-between px-8 py-4 z-40 bg-black/40 backdrop-blur-2xl border-b border-white/[0.08] select-none liquid-rim ${className}`}>
-      {/* 1. Left Brand Identity */}
-      <div className="flex items-center gap-3.5">
-        <div className="relative flex items-center justify-center w-9 h-9 rounded-2xl liquid-glass-card shadow-[0_0_20px_rgba(0,191,255,0.3)]">
-          <Sparkles className="w-4 h-4 text-[#00BFFF] animate-pulse" />
-        </div>
-        <div className="flex flex-col">
-          <div className="flex items-center gap-2">
-            <span className="font-extrabold tracking-[0.28em] text-sm text-transparent bg-clip-text bg-gradient-to-r from-white via-cyan-100 to-[#00BFFF]">
-              ASTRA
-            </span>
-            <span className="text-[10px] px-2 py-0.5 rounded-full liquid-glass-pill text-cyan-300 font-mono">
-              v10.0
-            </span>
-          </div>
-          <span className="text-[9px] font-mono tracking-widest text-[#6B8299] uppercase">
-            PERSONAL AI OPERATING SYSTEM
-          </span>
-        </div>
+    <header className={`w-full flex items-center justify-between px-8 py-3.5 z-40 bg-black/40 backdrop-blur-2xl border-b border-white/[0.08] select-none liquid-rim ${className}`}>
+      {/* 1. Left Brand Identity with Official Logo */}
+      <div className="flex items-center gap-3">
+        <img
+          src="./astra-logo.jpg"
+          alt="ASTRA AI Personal Assistant"
+          className="h-9 w-auto object-contain rounded-lg filter drop-shadow-[0_0_15px_rgba(0,191,255,0.3)] transition-all hover:scale-105"
+        />
+        <span className="text-[10px] px-2 py-0.5 rounded-full liquid-glass-pill text-cyan-300 font-mono tracking-wider">
+          v10.0
+        </span>
       </div>
 
       {/* 2. Center/Right Navigation & Status */}

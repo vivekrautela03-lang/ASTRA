@@ -231,11 +231,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
               />
             </div>
 
-            {/* Orb Status Indicator */}
-            <div className="flex flex-col items-center gap-1.5 -mt-4 mb-3">
-              <span className="font-extrabold tracking-[0.3em] text-xs text-transparent bg-clip-text bg-gradient-to-r from-white via-cyan-100 to-[#00BFFF]">
-                ASTRA
-              </span>
+            {/* Orb Status Indicator with Official Logo */}
+            <div className="flex flex-col items-center gap-2 -mt-4 mb-3">
+              <img
+                src="./astra-logo.jpg"
+                alt="ASTRA AI Personal Assistant"
+                className="h-10 w-auto object-contain filter drop-shadow-[0_0_20px_rgba(0,191,255,0.4)]"
+              />
               <div className="flex items-center gap-2 px-4 py-1.5 rounded-full liquid-glass-pill shadow-[0_0_20px_rgba(0,191,255,0.25)]">
                 <span className="w-1.5 h-1.5 rounded-full bg-[#00BFFF] animate-ping" />
                 <span className="text-[10px] font-mono tracking-widest text-cyan-300 font-semibold">
