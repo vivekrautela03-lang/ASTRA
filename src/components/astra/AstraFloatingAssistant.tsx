@@ -128,15 +128,15 @@ export const AstraFloatingAssistant: React.FC<AstraFloatingAssistantProps> = ({
         </div>
       )}
 
-      {/* 2. Floating Spatial Astra Overlay (Independent from underlying layout) */}
+      {/* 2. Floating Spatial Astra Overlay (Pure Transparent Backdrop - ONLY Orb & Typebar) */}
       {isVisible && (
         <div
-          className={`fixed inset-0 z-50 flex flex-col items-center justify-center p-6 bg-black/50 backdrop-blur-md transition-all duration-500 ${
+          className={`fixed inset-0 z-50 flex flex-col items-center justify-center p-6 bg-transparent pointer-events-none transition-all duration-500 ${
             animStage === 'waking'
               ? 'opacity-0 scale-75 animate-in fade-in zoom-in-75 duration-500 fill-mode-forwards'
               : animStage === 'exiting'
-              ? 'opacity-0 scale-90 pointer-events-none'
-              : 'opacity-100 scale-100 pointer-events-auto'
+              ? 'opacity-0 scale-90'
+              : 'opacity-100 scale-100'
           } ${className}`}
         >
           {/* Top Dismiss Button */}
@@ -144,14 +144,14 @@ export const AstraFloatingAssistant: React.FC<AstraFloatingAssistantProps> = ({
             type="button"
             onClick={handleDismiss}
             title="Dismiss Astra (Esc)"
-            className="absolute top-6 right-8 p-2.5 rounded-2xl liquid-glass-card text-white/50 hover:text-white hover:bg-white/10 transition-all select-none"
+            className="pointer-events-auto absolute top-6 right-8 p-2.5 rounded-2xl liquid-glass-card text-white/50 hover:text-white hover:bg-white/10 transition-all select-none"
           >
             <X className="w-5 h-5" />
           </button>
 
-          {/* Center Floating Assistant Container */}
-          <div className="flex flex-col items-center justify-center w-full max-w-2xl gap-2 select-none my-auto">
-            {/* Centerpiece Living Orb + Visualizer */}
+          {/* Center Floating Assistant Container (Pure Orb & Typebar) */}
+          <div className="pointer-events-auto flex flex-col items-center justify-center w-full max-w-2xl gap-2 select-none my-auto">
+            {/* Centerpiece Living Orb + Harmonic Ring */}
             <div className="relative flex items-center justify-center -mt-6">
               {/* Circular Harmonic Audio Waveform */}
               <VoiceVisualizer
