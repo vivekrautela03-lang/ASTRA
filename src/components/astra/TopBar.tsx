@@ -32,7 +32,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   ];
 
   return (
-    <header className={`w-full flex items-center justify-between px-8 py-3.5 z-40 bg-black/40 backdrop-blur-2xl border-b border-white/[0.08] select-none liquid-rim ${className}`}>
+    <header className={`w-full flex items-center justify-between px-8 py-4 z-40 bg-transparent select-none ${className}`}>
       {/* 1. Left Brand Identity with Pure Transparent Logo */}
       <div className="flex items-center gap-3">
         <AstraLogo size="sm" align="left" showSubtitle={true} />
