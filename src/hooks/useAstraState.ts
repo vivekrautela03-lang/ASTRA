@@ -1,11 +1,13 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import type { AstraOrbState } from '../components/astra/AstraOrb';
 
 export function useAstraState(initialState: AstraOrbState = 'IDLE') {
   const [state, setState] = useState<AstraOrbState>(initialState);
   const [statusText, setStatusText] = useState<string>('ONLINE • READY');
+  const stateRef = useRef<AstraOrbState>(initialState);
 
   const setAstraState = useCallback((nextState: AstraOrbState, customStatus?: string) => {
+    stateRef.current = nextState;
     setState(nextState);
 
     if (customStatus) {
@@ -15,8 +17,11 @@ export function useAstraState(initialState: AstraOrbState = 'IDLE') {
 
     const stateUpper = String(nextState).toUpperCase();
     switch (stateUpper) {
+      case 'WAKING':
+        setStatusText('WAKING ASTRA...');
+        break;
       case 'LISTENING':
-        setStatusText('LISTENING...');
+        setStatusText('ASTRA IS LISTENING...');
         break;
       case 'THINKING':
         setStatusText('THINKING...');
@@ -25,7 +30,7 @@ export function useAstraState(initialState: AstraOrbState = 'IDLE') {
         setStatusText('SPEAKING...');
         break;
       case 'PROCESSING':
-        setStatusText('PROCESSING...');
+        setStatusText('PROCESSING DIRECTIVE...');
         break;
       case 'ERROR':
         setStatusText('ATTENTION REQUIRED');
@@ -40,7 +45,8 @@ export function useAstraState(initialState: AstraOrbState = 'IDLE') {
   return {
     state,
     statusText,
-    setAstraState
+    setAstraState,
+    stateRef
   };
 }
 

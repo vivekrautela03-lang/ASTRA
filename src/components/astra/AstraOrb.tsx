@@ -3,6 +3,7 @@ import * as THREE from "three";
 
 export type AstraOrbState =
   | "IDLE"
+  | "WAKING"
   | "LISTENING"
   | "THINKING"
   | "SPEAKING"
@@ -23,10 +24,22 @@ export interface AstraOrbProps {
 export default function AstraOrb({
   size = 500,
   color = "#00BFFF",
+  state = "IDLE",
+  audioLevel = 0,
   onClick,
   className = ""
 }: AstraOrbProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const audioLevelRef = useRef<number>(audioLevel);
+  const stateRef = useRef<AstraOrbState | string>(state);
+
+  useEffect(() => {
+    audioLevelRef.current = audioLevel;
+  }, [audioLevel]);
+
+  useEffect(() => {
+    stateRef.current = state;
+  }, [state]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -62,7 +75,6 @@ export default function AstraOrb({
     );
 
     renderer.setSize(size, size);
-
     renderer.setClearColor(0x000000, 0);
 
     container.innerHTML = "";
@@ -105,6 +117,9 @@ export default function AstraOrb({
         uSpeed: {
           value: 0.35,
         },
+        uAudio: {
+          value: 0.0,
+        }
       },
 
       // ==========================================
@@ -131,6 +146,7 @@ export default function AstraOrb({
         uniform vec3 uColor;
         uniform float uIntensity;
         uniform float uSpeed;
+        uniform float uAudio;
 
         varying vec3 vPosition;
         varying vec3 vNormal;
@@ -252,8 +268,8 @@ export default function AstraOrb({
           // --------------------------------------
 
           float brightness =
-            energy * 2.0 +
-            fresnel * 0.65 +
+            energy * (2.0 + uAudio * 1.8) +
+            fresnel * (0.65 + uAudio * 0.8) +
             core * 0.25;
 
           // --------------------------------------
@@ -270,13 +286,13 @@ export default function AstraOrb({
           // --------------------------------------
 
           vec3 cyan = vec3(0.15, 0.75, 1.0);
-          finalColor += cyan * pow(energy, 3.5) * 1.8;
+          finalColor += cyan * pow(energy, 3.5) * (1.8 + uAudio * 2.0);
 
           // --------------------------------------
           // EDGE GLOW
           // --------------------------------------
 
-          finalColor += uColor * fresnel * 0.8;
+          finalColor += uColor * fresnel * (0.8 + uAudio * 0.5);
 
           // --------------------------------------
           // ALPHA
@@ -340,7 +356,7 @@ export default function AstraOrb({
     scene.add(light);
 
     // ============================================
-    // ANIMATION
+    // ANIMATION LOOP WITH STATE-REACTIVE LERP
     // ============================================
 
     const clock = new THREE.Clock();
@@ -349,19 +365,86 @@ export default function AstraOrb({
     function animate() {
       animationFrame = requestAnimationFrame(animate);
       const time = clock.getElapsedTime();
+      const currentAudio = audioLevelRef.current || 0;
+      const currentState = String(stateRef.current || 'IDLE').toUpperCase();
 
       material.uniforms.uTime.value = time;
+      material.uniforms.uAudio.value = THREE.MathUtils.lerp(
+        material.uniforms.uAudio.value,
+        currentAudio,
+        0.15
+      );
 
-      // Slow orb rotation
-      orb.rotation.y = time * 0.08;
+      // Target shader parameters based on Orb State Lifecycle
+      let targetSpeed = 0.35;
+      let targetIntensity = 1.7;
+      let targetColor = new THREE.Color(color);
+      let targetParticleColor = new THREE.Color(0x63D8FF);
+
+      if (currentState === "WAKING") {
+        targetSpeed = 0.65;
+        targetIntensity = 2.4;
+        targetColor = new THREE.Color("#00E5FF");
+        targetParticleColor = new THREE.Color("#A5F3FC");
+      } else if (currentState === "LISTENING") {
+        targetSpeed = 0.50;
+        targetIntensity = 2.0 + currentAudio * 1.6;
+        targetColor = new THREE.Color("#00BFFF");
+        targetParticleColor = new THREE.Color("#67E8F9");
+      } else if (currentState === "THINKING" || currentState === "PROCESSING") {
+        targetSpeed = 1.05;
+        targetIntensity = 2.5;
+        targetColor = new THREE.Color("#8A2BE2");
+        targetParticleColor = new THREE.Color("#D8B4FE");
+      } else if (currentState === "SPEAKING") {
+        targetSpeed = 0.60;
+        targetIntensity = 2.2 + currentAudio * 2.0;
+        targetColor = new THREE.Color("#00BFFF");
+        targetParticleColor = new THREE.Color("#63D8FF");
+      } else if (currentState === "ERROR") {
+        targetSpeed = 0.25;
+        targetIntensity = 1.6;
+        targetColor = new THREE.Color("#F43F5E");
+        targetParticleColor = new THREE.Color("#FDA4AF");
+      } else {
+        // IDLE
+        targetSpeed = 0.28;
+        targetIntensity = 1.5;
+        targetColor = new THREE.Color(color);
+        targetParticleColor = new THREE.Color(0x63D8FF);
+      }
+
+      // Smooth lerp transitions
+      material.uniforms.uSpeed.value = THREE.MathUtils.lerp(
+        material.uniforms.uSpeed.value,
+        targetSpeed,
+        0.08
+      );
+      material.uniforms.uIntensity.value = THREE.MathUtils.lerp(
+        material.uniforms.uIntensity.value,
+        targetIntensity,
+        0.08
+      );
+      material.uniforms.uColor.value.lerp(targetColor, 0.08);
+
+      particleMaterial.color.lerp(targetParticleColor, 0.08);
+
+      // Smooth orb rotation (faster during thinking/waking)
+      const rotationSpeedMultiplier = material.uniforms.uSpeed.value / 0.35;
+      orb.rotation.y = time * 0.08 * rotationSpeedMultiplier;
       orb.rotation.x = Math.sin(time * 0.2) * 0.08;
 
       // Particle movement
-      particles.rotation.y = time * 0.12;
+      particles.rotation.y = time * 0.12 * rotationSpeedMultiplier;
       particles.rotation.x = time * 0.035;
 
       // Breathing light
-      light.intensity = 2.2 + Math.sin(time * 1.5) * 0.6;
+      light.intensity =
+        2.2 +
+        Math.sin(time * 1.5) * 0.6 +
+        currentAudio * 1.8 +
+        (currentState === "WAKING" ? 1.0 : 0);
+      light.color.lerp(targetColor, 0.08);
 
       renderer.render(scene, camera);
     }

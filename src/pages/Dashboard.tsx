@@ -9,6 +9,7 @@ import { CommandBar } from '../components/astra/CommandBar';
 import { QuickCommands } from '../components/astra/QuickCommands';
 import { AstraChatScreen } from '../components/astra/AstraChatScreen';
 import { AstraPluginsCenter } from '../components/astra/AstraPluginsCenter';
+import { AstraFloatingAssistant } from '../components/astra/AstraFloatingAssistant';
 import { CameraBackground } from '../components/astra/CameraBackground';
 import { LiquidGlassBackground } from '../components/astra/LiquidGlassBackground';
 import { AstraLogo } from '../components/astra/AstraLogo';
@@ -16,6 +17,8 @@ import { useAstraState } from '../hooks/useAstraState';
 import { useVoice } from '../hooks/useVoice';
 import { useCamera } from '../hooks/useCamera';
 import { aiEngine } from '../services/aiEngine';
+import { wakeWordDetector } from '../services/speech/wakeWord';
+import { handleAstraEvent } from '../services/astraEvents';
 import { AstraSecurityCenter } from '../components/astra/AstraSecurityCenter';
 import { AstraRoboticsHUD } from '../components/astra/AstraRoboticsHUD';
 import { AstraPublicApisView } from '../components/astra/AstraPublicApisView';
@@ -31,8 +34,8 @@ interface DashboardProps {
 export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
   const { state, statusText, setAstraState } = useAstraState('IDLE');
   const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [currentResponse] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<SidebarTab>('voice'); // Default to Voice/Living Orb Screen
+  const [currentResponse, setCurrentResponse] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<SidebarTab>('voice');
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [showSettings, setShowSettings] = useState(false);
   const [selectedModel, setSelectedModel] = useState<AIModelId>('llama-3-70b');
@@ -42,6 +45,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
 
   const sendPromptRef = useRef<(text: string) => Promise<void>>(async () => {});
   const voiceSpeakRef = useRef<(text: string, onEnd?: () => void) => void>(() => {});
+
+  // Initialize Wake Word Background Listening
+  useEffect(() => {
+    wakeWordDetector.start();
+    return () => {
+      wakeWordDetector.stop();
+    };
+  }, []);
 
   // Master Prompt Processing
   const handleProcessPrompt = useCallback(
@@ -58,12 +69,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
       };
       setMessages((prev) => [...prev, userMsg]);
 
-      // 2. Set State to THINKING
+      // 2. Set State to THINKING (Circulating energy loader)
       setAstraState('THINKING');
+      handleAstraEvent({ type: 'query_submitted', payload: { query } });
 
       try {
         const aiRes = await aiEngine.generateResponse(query, selectedModel);
         const replyText = aiRes.text;
+        setCurrentResponse(replyText);
 
         // Contextual action triggers
         const actions: ChatMessage['actions'] = [];
@@ -125,11 +138,15 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         // 3. Speaking State & TTS
         if (soundEnabled) {
           setAstraState('SPEAKING');
+          handleAstraEvent({ type: 'response_started', payload: { replyText } });
+
           voiceSpeakRef.current(replyText, () => {
             setAstraState('IDLE');
+            handleAstraEvent({ type: 'response_finished' });
           });
         } else {
           setAstraState('IDLE');
+          handleAstraEvent({ type: 'response_finished' });
         }
       } catch (err) {
         console.error('[ASTRA DASHBOARD ERROR]:', err);
@@ -142,7 +159,10 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
             text: "Neural synchronization error. Reconnecting to local gateway..."
           }
         ]);
-        setTimeout(() => setAstraState('IDLE'), 3000);
+        setTimeout(() => {
+          setAstraState('IDLE');
+          handleAstraEvent({ type: 'response_finished' });
+        }, 3000);
       }
     },
     [setAstraState, soundEnabled, selectedModel, camera]
@@ -166,7 +186,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
       voice.stopListening();
       setAstraState('IDLE');
     } else {
-      setActiveTab('voice');
       setAstraState('LISTENING');
       voice.startListening().then((ok) => {
         if (!ok) setAstraState('ERROR', 'MICROPHONE ACCESS REQUIRED');
@@ -179,7 +198,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
       setShowSettings(true);
     } else if (tab === 'voice') {
       setActiveTab('voice');
-      toggleVoiceMode();
+      handleAstraEvent({ type: 'manual_wake', payload: { source: 'sidebar' } });
     } else {
       setActiveTab(tab);
     }
@@ -331,6 +350,18 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
           </div>
         )}
       </main>
+
+      {/* 3. Universal Floating Astra Spatial Layer (Active over any tab upon "Hey Astra" or summon) */}
+      <AstraFloatingAssistant
+        state={state}
+        statusText={statusText}
+        audioLevel={voice.audioLevel}
+        isRecording={voice.isRecording}
+        onSend={(text) => handleProcessPrompt(text)}
+        onToggleVoice={toggleVoiceMode}
+        onStateChange={(s, txt) => setAstraState(s, txt)}
+        activeResponseText={currentResponse}
+      />
 
       {/* Settings Modal */}
       <AstraSettings
