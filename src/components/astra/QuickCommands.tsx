@@ -5,7 +5,6 @@ import {
   Focus,
   Music,
   CheckCircle,
-  Cpu,
   ShieldCheck,
   Sparkles
 } from 'lucide-react';
@@ -26,7 +25,6 @@ export const QuickCommands: React.FC<QuickCommandsProps> = ({
     { label: 'Start focus mode', icon: Focus, prompt: 'Activate focus mode and mute low-priority notifications.' },
     { label: 'Play music', icon: Music, prompt: 'Play focus ambient music in the background.' },
     { label: 'Create reminder', icon: CheckCircle, prompt: 'Create a reminder for my next project milestone.' },
-    { label: 'Robotics HUD', icon: Cpu, prompt: 'Open robotics telemetry and kinematic visualizer.' },
     { label: 'Security check', icon: ShieldCheck, prompt: 'Run security sandbox integrity diagnostics.' },
   ];
 

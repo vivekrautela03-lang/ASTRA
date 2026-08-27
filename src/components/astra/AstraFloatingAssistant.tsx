@@ -3,7 +3,6 @@ import { AstraOrb, type AstraOrbState } from './AstraOrb';
 import { VoiceVisualizer } from './VoiceVisualizer';
 import { AstraLogo } from './AstraLogo';
 import { CommandBar } from './CommandBar';
-import { QuickCommands } from './QuickCommands';
 import { onAstraEvent, handleAstraEvent } from '../../services/astraEvents';
 import { X, Mic, Volume2 } from 'lucide-react';
 
@@ -207,10 +206,8 @@ export const AstraFloatingAssistant: React.FC<AstraFloatingAssistantProps> = ({
               </div>
             )}
 
-            {/* Attached Existing Type Bar & Quick Chips */}
-            <div className="w-full max-w-2xl flex flex-col items-center gap-3 mt-2">
-              <QuickCommands onSelectCommand={handleCommandSend} />
-
+            {/* Attached Existing Pure Type Bar */}
+            <div className="w-full max-w-2xl flex flex-col items-center mt-2">
               <CommandBar
                 onSend={handleCommandSend}
                 onToggleVoice={onToggleVoice}

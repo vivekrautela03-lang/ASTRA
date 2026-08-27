@@ -7,7 +7,6 @@ import {
   Calendar,
   Folder,
   Settings,
-  Cpu,
   Shield
 } from 'lucide-react';
 
@@ -18,7 +17,6 @@ export type SidebarTab =
   | 'tasks'
   | 'calendar'
   | 'files'
-  | 'robotics'
   | 'security'
   | 'settings';
 
@@ -42,7 +40,6 @@ export const SideBar: React.FC<SideBarProps> = ({
     { id: 'tasks', label: 'Task Studio', icon: CheckSquare },
     { id: 'calendar', label: 'Calendar', icon: Calendar },
     { id: 'files', label: 'File Vault', icon: Folder },
-    { id: 'robotics', label: 'Robotics HUD', icon: Cpu },
     { id: 'security', label: 'Security Center', icon: Shield },
     { id: 'settings', label: 'System Settings', icon: Settings },
   ];

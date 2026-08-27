@@ -22,7 +22,6 @@ import { wakeWordDetector } from '../services/speech/wakeWord';
 import { handleAstraEvent } from '../services/astraEvents';
 import { fileVaultService } from '../services/fileVaultService';
 import { AstraSecurityCenter } from '../components/astra/AstraSecurityCenter';
-import { AstraRoboticsHUD } from '../components/astra/AstraRoboticsHUD';
 import { AstraTaskStudio } from '../components/astra/AstraTaskStudio';
 import { AstraSettings } from '../components/astra/AstraSettings';
 import type { AIModelId } from '../types/eva';
@@ -102,13 +101,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
             label: camera.isActive ? 'Disable AR Camera' : 'Enable AR Camera',
             variant: 'primary',
             onClick: () => camera.toggleCamera()
-          });
-        }
-        if (lower.includes('robot') || lower.includes('suit') || lower.includes('telemetry')) {
-          actions.push({
-            label: 'Open Robotics HUD',
-            variant: 'primary',
-            onClick: () => setActiveTab('robotics')
           });
         }
         if (lower.includes('security') || lower.includes('sandbox') || lower.includes('verify')) {
@@ -258,8 +250,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
               ? 'File Vault & Archive'
               : camera.isActive
               ? 'AR Vision Engine'
-              : activeTab === 'robotics'
-              ? 'Robotics Engine'
               : activeTab === 'security'
               ? 'Security Shield'
               : 'Assistant Voice Mode'
@@ -305,10 +295,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
                 setActiveTab('chat');
               }}
             />
-          </div>
-        ) : activeTab === 'robotics' ? (
-          <div className="w-full max-w-4xl h-[70vh] my-auto overflow-y-auto astra-scrollbar animate-in fade-in zoom-in-95">
-            <AstraRoboticsHUD />
           </div>
         ) : activeTab === 'security' ? (
           <div className="w-full max-w-4xl h-[70vh] my-auto overflow-y-auto astra-scrollbar animate-in fade-in zoom-in-95">
