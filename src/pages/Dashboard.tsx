@@ -8,6 +8,7 @@ import type { ChatMessage } from '../components/astra/ChatPanel';
 import { CommandBar } from '../components/astra/CommandBar';
 import { QuickCommands } from '../components/astra/QuickCommands';
 import { AstraChatScreen } from '../components/astra/AstraChatScreen';
+import { AstraPluginsCenter } from '../components/astra/AstraPluginsCenter';
 import { CameraBackground } from '../components/astra/CameraBackground';
 import { LiquidGlassBackground } from '../components/astra/LiquidGlassBackground';
 import { AstraLogo } from '../components/astra/AstraLogo';
@@ -68,6 +69,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         const actions: ChatMessage['actions'] = [];
         const lower = query.toLowerCase();
 
+        if (lower.includes('plugin') || lower.includes('key') || lower.includes('connect') || lower.includes('app')) {
+          actions.push({
+            label: 'Open Plugins Vault',
+            variant: 'primary',
+            onClick: () => setActiveTab('plugins')
+          });
+        }
         if (lower.includes('camera') || lower.includes('vision') || lower.includes('video') || lower.includes('ar')) {
           actions.push({
             label: camera.isActive ? 'Disable AR Camera' : 'Enable AR Camera',
@@ -217,6 +225,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
           currentMode={
             activeTab === 'chat'
               ? 'Conversational HUD'
+              : activeTab === 'plugins'
+              ? 'Plugins & Integrations'
               : camera.isActive
               ? 'AR Vision Engine'
               : activeTab === 'robotics'
@@ -228,7 +238,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
           onManageMemory={() => setActiveTab('chat')}
         />
 
-        {/* Mode Switching: Full Chat Screen vs Voice Living Orb vs Other HUDs */}
+        {/* Mode Switching: Full Chat Screen vs Voice Living Orb vs Plugins vs Other HUDs */}
         {activeTab === 'chat' ? (
           /* ===================================================
              MODE A: Full Dedicated ChatGPT / Gemini Style Chat
@@ -243,6 +253,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
               state={state}
               onNewChat={() => setMessages([])}
             />
+          </div>
+        ) : activeTab === 'plugins' ? (
+          /* ===================================================
+             MODE C: Plugins & API Keys Integration Vault
+             =================================================== */
+          <div className="w-full max-w-5xl my-auto animate-in fade-in zoom-in-95 duration-300">
+            <AstraPluginsCenter />
           </div>
         ) : activeTab === 'robotics' ? (
           <div className="w-full max-w-4xl h-[70vh] my-auto overflow-y-auto astra-scrollbar animate-in fade-in zoom-in-95">

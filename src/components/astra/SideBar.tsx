@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import {
   MessageSquare,
   Mic,
-  Search,
+  Blocks,
   CheckSquare,
   Calendar,
   Folder,
@@ -15,7 +15,7 @@ import {
 export type SidebarTab =
   | 'chat'
   | 'voice'
-  | 'search'
+  | 'plugins'
   | 'tasks'
   | 'calendar'
   | 'files'
@@ -40,7 +40,7 @@ export const SideBar: React.FC<SideBarProps> = ({
   const items = [
     { id: 'chat', label: 'Chat HUD', icon: MessageSquare },
     { id: 'voice', label: 'Voice Mode', icon: Mic },
-    { id: 'search', label: 'Neural Search', icon: Search },
+    { id: 'plugins', label: 'Plugins & APIs', icon: Blocks },
     { id: 'tasks', label: 'Task Studio', icon: CheckSquare },
     { id: 'calendar', label: 'Calendar', icon: Calendar },
     { id: 'files', label: 'File Vault', icon: Folder },
@@ -58,38 +58,47 @@ export const SideBar: React.FC<SideBarProps> = ({
         isHovered ? 'w-52' : 'w-16'
       } ${className}`}
     >
-      <div className="flex flex-col gap-1.5">
-        {items.map((item) => {
-          const Icon = item.icon;
-          const isActive = activeTab === item.id;
+      {items.map((item) => {
+        const Icon = item.icon;
+        const isActive = activeTab === item.id;
 
-          return (
-            <button
-              key={item.id}
-              type="button"
-              onClick={() => onSelectTab(item.id as SidebarTab)}
-              className={`flex items-center gap-3 w-full p-3 rounded-2xl text-xs font-medium transition-all ${
-                isActive
-                  ? 'liquid-glass-pill text-cyan-300 shadow-[0_0_20px_rgba(0,191,255,0.35)] font-semibold'
-                  : 'text-white/60 hover:text-white hover:bg-white/[0.06]'
+        return (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => onSelectTab(item.id as SidebarTab)}
+            className={`relative flex items-center gap-3.5 p-2.5 rounded-2xl transition-all duration-200 group text-left ${
+              isActive
+                ? 'bg-cyan-500/20 text-[#00BFFF] border border-cyan-500/40 shadow-[0_0_20px_rgba(0,191,255,0.35)]'
+                : 'text-white/60 hover:text-cyan-300 hover:bg-white/[0.08]'
+            }`}
+          >
+            {/* Active Indicator Pip */}
+            {isActive && (
+              <span className="absolute -left-1 top-1/2 -translate-y-1/2 w-1.5 h-4 bg-[#00BFFF] rounded-r-full shadow-[0_0_10px_#00BFFF]" />
+            )}
+
+            <div className="w-5 h-5 flex items-center justify-center shrink-0">
+              <Icon
+                className={`w-4 h-4 transition-transform group-hover:scale-110 ${
+                  isActive ? 'text-[#00BFFF]' : ''
+                }`}
+              />
+            </div>
+
+            {/* Label (Visible on hover or expanded) */}
+            <span
+              className={`text-xs font-semibold tracking-wide whitespace-nowrap overflow-hidden transition-all duration-300 ${
+                isHovered
+                  ? 'opacity-100 max-w-[130px]'
+                  : 'opacity-0 max-w-0 pointer-events-none'
               }`}
             >
-              <div className="relative shrink-0 flex items-center justify-center">
-                <Icon className={`w-4 h-4 transition-transform ${isActive ? 'scale-110 text-cyan-300' : ''}`} />
-                {isActive && (
-                  <span className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-[#00BFFF] shadow-[0_0_8px_#00BFFF]" />
-                )}
-              </div>
-
-              {isHovered && (
-                <span className="whitespace-nowrap font-sans font-medium tracking-wide animate-in fade-in">
-                  {item.label}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
+              {item.label}
+            </span>
+          </button>
+        );
+      })}
     </aside>
   );
 };
