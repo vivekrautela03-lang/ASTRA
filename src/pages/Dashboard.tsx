@@ -9,6 +9,7 @@ import { CommandBar } from '../components/astra/CommandBar';
 import { QuickCommands } from '../components/astra/QuickCommands';
 import { AstraChatScreen } from '../components/astra/AstraChatScreen';
 import { AstraPluginsCenter } from '../components/astra/AstraPluginsCenter';
+import { AstraFileVault } from '../components/astra/AstraFileVault';
 import { AstraFloatingAssistant } from '../components/astra/AstraFloatingAssistant';
 import { CameraBackground } from '../components/astra/CameraBackground';
 import { LiquidGlassBackground } from '../components/astra/LiquidGlassBackground';
@@ -19,6 +20,7 @@ import { useCamera } from '../hooks/useCamera';
 import { aiEngine } from '../services/aiEngine';
 import { wakeWordDetector } from '../services/speech/wakeWord';
 import { handleAstraEvent } from '../services/astraEvents';
+import { fileVaultService } from '../services/fileVaultService';
 import { AstraSecurityCenter } from '../components/astra/AstraSecurityCenter';
 import { AstraRoboticsHUD } from '../components/astra/AstraRoboticsHUD';
 import { AstraPublicApisView } from '../components/astra/AstraPublicApisView';
@@ -82,6 +84,13 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         const actions: ChatMessage['actions'] = [];
         const lower = query.toLowerCase();
 
+        if (lower.includes('file') || lower.includes('vault') || lower.includes('doc') || lower.includes('pdf') || lower.includes('archive')) {
+          actions.push({
+            label: 'Open File Vault',
+            variant: 'primary',
+            onClick: () => setActiveTab('files')
+          });
+        }
         if (lower.includes('plugin') || lower.includes('key') || lower.includes('connect') || lower.includes('app')) {
           actions.push({
             label: 'Open Plugins Vault',
@@ -133,7 +142,14 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
           actions
         };
 
-        setMessages((prev) => [...prev, astraMsg]);
+        setMessages((prev) => {
+          const updated = [...prev, astraMsg];
+          // Auto archive session to vault if extended conversation
+          if (updated.length >= 4) {
+            fileVaultService.saveChatSession(query, updated, selectedModel);
+          }
+          return updated;
+        });
 
         // 3. Speaking State & TTS
         if (soundEnabled) {
@@ -246,6 +262,8 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
               ? 'Conversational HUD'
               : activeTab === 'plugins'
               ? 'Plugins & Integrations'
+              : activeTab === 'files'
+              ? 'File Vault & Archive'
               : camera.isActive
               ? 'AR Vision Engine'
               : activeTab === 'robotics'
@@ -257,7 +275,7 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
           onManageMemory={() => setActiveTab('chat')}
         />
 
-        {/* Mode Switching: Full Chat Screen vs Voice Living Orb vs Plugins vs Other HUDs */}
+        {/* Mode Switching: Full Chat Screen vs Voice Living Orb vs Plugins vs Files vs Other HUDs */}
         {activeTab === 'chat' ? (
           /* ===================================================
              MODE A: Full Dedicated ChatGPT / Gemini Style Chat
@@ -270,7 +288,12 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
               onToggleVoice={toggleVoiceMode}
               isRecording={voice.isRecording}
               state={state}
-              onNewChat={() => setMessages([])}
+              onNewChat={() => {
+                if (messages.length > 0) {
+                  fileVaultService.saveChatSession(messages[0]?.text || 'Archived Chat', messages, selectedModel);
+                }
+                setMessages([]);
+              }}
             />
           </div>
         ) : activeTab === 'plugins' ? (
@@ -279,6 +302,17 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
              =================================================== */
           <div className="w-full max-w-5xl my-auto animate-in fade-in zoom-in-95 duration-300">
             <AstraPluginsCenter />
+          </div>
+        ) : activeTab === 'files' ? (
+          /* ===================================================
+             MODE D: File Vault & Storage (Chats, Images, Docs)
+             =================================================== */
+          <div className="w-full max-w-5xl my-auto animate-in fade-in zoom-in-95 duration-300">
+            <AstraFileVault
+              onOpenChatSession={(_content) => {
+                setActiveTab('chat');
+              }}
+            />
           </div>
         ) : activeTab === 'robotics' ? (
           <div className="w-full max-w-4xl h-[70vh] my-auto overflow-y-auto astra-scrollbar animate-in fade-in zoom-in-95">
