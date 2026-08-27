@@ -31,7 +31,7 @@ export const AstraFloatingAssistant: React.FC<AstraFloatingAssistantProps> = ({
 }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [animStage, setAnimStage] = useState<'idle' | 'waking' | 'active' | 'exiting'>('idle');
-  const exitTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const exitTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const handleDismiss = useCallback(() => {
     setAnimStage('exiting');
