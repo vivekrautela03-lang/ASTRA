@@ -1,7 +1,7 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || 'https://hzvsrqhfurghzkfdpxlt.supabase.co';
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || 'sb_publishable_bu28v7nh2nNcbuIQ-XrILg_QVZYZVkS';
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL || '';
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
 
 export class SupabaseService {
   private static instance: SupabaseService;
