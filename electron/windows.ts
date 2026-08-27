@@ -7,7 +7,7 @@ export interface WindowState {
   y?: number;
   width: number;
   height: number;
-  isExpanded: boolean;
+  isMaximized?: boolean;
 }
 
 const CONFIG_FILE = path.join(app.getPath('userData'), 'window-state.json');
@@ -15,9 +15,9 @@ const CONFIG_FILE = path.join(app.getPath('userData'), 'window-state.json');
 export class WindowManager {
   private mainWindow: BrowserWindow | null = null;
   private state: WindowState = {
-    width: 460,
-    height: 650,
-    isExpanded: true
+    width: 1280,
+    height: 840,
+    isMaximized: false
   };
 
   constructor() {
@@ -38,11 +38,15 @@ export class WindowManager {
   public saveState() {
     try {
       if (this.mainWindow && !this.mainWindow.isDestroyed()) {
-        const bounds = this.mainWindow.getBounds();
-        this.state.x = bounds.x;
-        this.state.y = bounds.y;
-        this.state.width = bounds.width;
-        this.state.height = bounds.height;
+        const isMaximized = this.mainWindow.isMaximized();
+        this.state.isMaximized = isMaximized;
+        if (!isMaximized) {
+          const bounds = this.mainWindow.getBounds();
+          this.state.x = bounds.x;
+          this.state.y = bounds.y;
+          this.state.width = bounds.width;
+          this.state.height = bounds.height;
+        }
       }
       fs.writeFileSync(CONFIG_FILE, JSON.stringify(this.state, null, 2), 'utf8');
     } catch {
@@ -51,16 +55,14 @@ export class WindowManager {
   }
 
   public createMainWindow(preloadPath: string): BrowserWindow {
-    // Detect active display nearest to cursor
-    const cursorPoint = screen.getCursorScreenPoint();
-    const currentDisplay = screen.getDisplayNearestPoint(cursorPoint);
-    const workArea = currentDisplay.workArea;
+    const primaryDisplay = screen.getPrimaryDisplay();
+    const workArea = primaryDisplay.workArea;
 
-    // Default position: bottom-right with 28px margin
-    const initialWidth = this.state.width || 460;
-    const initialHeight = this.state.height || 650;
-    const defaultX = workArea.x + workArea.width - initialWidth - 28;
-    const defaultY = workArea.y + workArea.height - initialHeight - 28;
+    const initialWidth = Math.min(this.state.width || 1280, workArea.width);
+    const initialHeight = Math.min(this.state.height || 840, workArea.height);
+
+    const defaultX = Math.round(workArea.x + (workArea.width - initialWidth) / 2);
+    const defaultY = Math.round(workArea.y + (workArea.height - initialHeight) / 2);
 
     const posX = this.state.x !== undefined && this.isWithinScreen(this.state.x, this.state.y ?? 0)
       ? this.state.x
@@ -74,35 +76,34 @@ export class WindowManager {
       y: posY,
       width: initialWidth,
       height: initialHeight,
-      minWidth: 360,
-      minHeight: 500,
-      frame: false,
-      transparent: true,
-      alwaysOnTop: true,
-      hasShadow: false,
-      resizable: true,
-      skipTaskbar: false,
+      minWidth: 800,
+      minHeight: 600,
+      frame: true,
+      title: 'Astra AI Assistant',
+      backgroundColor: '#000000',
+      autoHideMenuBar: true,
       show: false,
-      backgroundColor: '#00000000',
       webPreferences: {
         preload: preloadPath,
         contextIsolation: true,
         nodeIntegration: false,
         sandbox: false,
-        webSecurity: true
+        webSecurity: false // allow local asset loading in standalone mode
       }
     });
+
+    // Restore maximized state if saved
+    if (this.state.isMaximized) {
+      this.mainWindow.maximize();
+    }
 
     // Save bounds on move/resize
     this.mainWindow.on('moved', () => this.saveState());
     this.mainWindow.on('resized', () => this.saveState());
 
-    // Intercept close to hide window instead of terminating app
-    this.mainWindow.on('close', (e) => {
-      if (!app.isQuitting) {
-        e.preventDefault();
-        this.mainWindow?.hide();
-      }
+    // Clean exit handling
+    this.mainWindow.on('close', () => {
+      this.saveState();
     });
 
     return this.mainWindow;
@@ -117,32 +118,6 @@ export class WindowManager {
       if (this.mainWindow.isMinimized()) this.mainWindow.restore();
       this.mainWindow.show();
       this.mainWindow.focus();
-      this.mainWindow.setAlwaysOnTop(true, 'floating');
-    }
-  }
-
-  public setExpanded(expanded: boolean) {
-    if (!this.mainWindow) return;
-    this.state.isExpanded = expanded;
-
-    const cursorPoint = screen.getCursorScreenPoint();
-    const currentDisplay = screen.getDisplayNearestPoint(cursorPoint);
-    const workArea = currentDisplay.workArea;
-
-    if (expanded) {
-      const w = 460;
-      const h = 650;
-      const x = workArea.x + workArea.width - w - 28;
-      const y = workArea.y + workArea.height - h - 28;
-      this.mainWindow.setResizable(true);
-      this.mainWindow.setBounds({ x, y, width: w, height: h });
-    } else {
-      const w = 110;
-      const h = 120;
-      const x = workArea.x + workArea.width - w - 28;
-      const y = workArea.y + workArea.height - h - 28;
-      this.mainWindow.setResizable(false);
-      this.mainWindow.setBounds({ x, y, width: w, height: h });
     }
   }
 
@@ -150,7 +125,7 @@ export class WindowManager {
     const displays = screen.getAllDisplays();
     return displays.some(d => {
       const b = d.bounds;
-      return x >= b.x && x <= b.x + b.width - 50 && y >= b.y && y <= b.y + b.height - 50;
+      return x >= b.x && x <= b.x + b.width - 100 && y >= b.y && y <= b.y + b.height - 100;
     });
   }
 }

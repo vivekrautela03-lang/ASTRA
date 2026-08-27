@@ -7,15 +7,15 @@
   "main": "dist-electron/main.js",
   "scripts": {
     "dev": "vite",
-    "backend": "node server/index.js",
+    "electron": "concurrently -k \"vite\" \"wait-on tcp:3000 && npm run build:electron && cross-env VITE_DEV_SERVER_URL=http://localhost:3000 electron .\"",
+    "electron:dev": "concurrently -k \"vite\" \"wait-on tcp:3000 && npm run build:electron && cross-env VITE_DEV_SERVER_URL=http://localhost:3000 electron .\"",
     "build:frontend": "tsc -b && vite build",
     "build:electron": "tsc -p tsconfig.electron.json",
     "build": "npm run build:frontend && npm run build:electron",
-    "lint": "oxlint",
+    "dist": "npm run build && electron-builder --win",
+    "pack": "npm run build && electron-builder --dir",
     "preview": "vite preview",
-    "electron:dev": "concurrently -k \"vite\" \"wait-on tcp:5173 && npm run build:electron && electron .\"",
-    "electron:build": "npm run build && electron-builder",
-    "electron:pack": "npm run build && electron-builder --dir"
+    "lint": "oxlint"
   },
   "dependencies": {
     "@react-three/drei": "^10.7.8",
@@ -41,6 +41,7 @@
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.4",
     "concurrently": "^10.0.5",
+    "cross-env": "^10.1.0",
     "electron": "^43.4.1",
     "electron-builder": "^26.15.3",
     "oxlint": "^1.75.0",
@@ -57,8 +58,6 @@
     "files": [
       "dist/**/*",
       "dist-electron/**/*",
-      "server/**/*",
-      "backend/**/*",
       "package.json"
     ],
     "win": {

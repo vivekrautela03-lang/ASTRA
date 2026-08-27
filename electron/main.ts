@@ -2,7 +2,6 @@ import { app, BrowserWindow, globalShortcut, Tray, Menu, ipcMain, nativeImage } 
 import path from 'path';
 import fs from 'fs';
 import { WindowManager } from './windows';
-import http from 'http';
 
 // Declare custom property on app for clean exit
 declare global {
@@ -18,8 +17,6 @@ app.isQuitting = false;
 let windowManager: WindowManager | null = null;
 let tray: Tray | null = null;
 
-const PORT = process.env.PORT || 8990;
-
 // Single instance lock
 const gotTheLock = app.requestSingleInstanceLock();
 if (!gotTheLock) {
@@ -32,41 +29,8 @@ if (!gotTheLock) {
   });
 }
 
-function checkServerHealthy(port: number | string): Promise<boolean> {
-  return new Promise((resolve) => {
-    const req = http.get(`http://localhost:${port}/health`, (res) => {
-      resolve(res.statusCode === 200);
-    });
-    req.on('error', () => resolve(false));
-    req.setTimeout(600, () => {
-      req.destroy();
-      resolve(false);
-    });
-  });
-}
-
-async function ensureBackendServer() {
-  const isHealthy = await checkServerHealthy(PORT);
-  if (!isHealthy) {
-    try {
-      // Dynamically initialize the backend server directly in-process
-      const serverPath = path.resolve(__dirname, '../server/index.js');
-      if (fs.existsSync(serverPath)) {
-        await import(`file://${serverPath.replace(/\\/g, '/')}`);
-        // Wait for server ready
-        for (let i = 0; i < 15; i++) {
-          await new Promise(r => setTimeout(r, 200));
-          if (await checkServerHealthy(PORT)) break;
-        }
-      }
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : String(err);
-      console.warn('[ELECTRON] Backend server auto-start warning:', msg);
-    }
-  }
-}
-
 function createTray(win: BrowserWindow) {
+  // Built-in base64 tray icon (16x16 cyan orb)
   const icon = nativeImage.createFromBuffer(
     Buffer.from(
       'iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAZklEQVQ4T2NkoBAwUqifYdQABmJs+k+ePBkGk5OTh1hGRkYm/P//nwENk20AkgpGjBhhgC5GjmGM0dHR8eg2kGUASf6PHTv2PzY5ZGFGsgHI9sHcgM0Qkg0gJb2Qk2FIBgB6V4wXQ1R4+AAAAABJRU5ErkJggg==',
@@ -74,67 +38,65 @@ function createTray(win: BrowserWindow) {
     )
   );
 
-  tray = new Tray(icon);
-  tray.setToolTip('ASTRA — Personal AI Operating System');
+  try {
+    tray = new Tray(icon);
+    tray.setToolTip('ASTRA — Personal AI Operating System');
 
-  const contextMenu = Menu.buildFromTemplate([
-    {
-      label: '✦ ASTRA AI Assistant',
-      enabled: false
-    },
-    { type: 'separator' },
-    {
-      label: 'Open Astra (Ctrl+Space)',
-      click: () => {
-        windowManager?.showAndFocus();
-        win.webContents.send('astra:shortcut-activate');
+    const contextMenu = Menu.buildFromTemplate([
+      {
+        label: '✦ Astra AI Assistant',
+        enabled: false
+      },
+      { type: 'separator' },
+      {
+        label: 'Open Astra (Alt+Space)',
+        click: () => {
+          windowManager?.showAndFocus();
+          win.webContents.send('astra:shortcut-activate');
+        }
+      },
+      {
+        label: 'Wake Astra (Voice)',
+        click: () => {
+          windowManager?.showAndFocus();
+          win.webContents.send('astra:shortcut-listen');
+        }
+      },
+      { type: 'separator' },
+      {
+        label: 'Quit Astra',
+        click: () => {
+          app.isQuitting = true;
+          app.quit();
+        }
       }
-    },
-    {
-      label: 'Start Listening',
-      click: () => {
-        windowManager?.showAndFocus();
-        win.webContents.send('astra:shortcut-listen');
-      }
-    },
-    {
-      label: 'Settings',
-      click: () => {
-        windowManager?.showAndFocus();
-      }
-    },
-    { type: 'separator' },
-    {
-      label: 'Quit Astra',
-      click: () => {
-        app.isQuitting = true;
-        app.quit();
-      }
-    }
-  ]);
+    ]);
 
-  tray.setContextMenu(contextMenu);
-  tray.on('click', () => {
-    if (win.isVisible()) {
-      win.hide();
-    } else {
-      windowManager?.showAndFocus();
-    }
-  });
+    tray.setContextMenu(contextMenu);
+    tray.on('click', () => {
+      if (win.isVisible()) {
+        win.hide();
+      } else {
+        windowManager?.showAndFocus();
+      }
+    });
+  } catch (err) {
+    console.warn('[TRAY WARNING]:', err);
+  }
 }
 
 function registerGlobalShortcuts(win: BrowserWindow) {
-  let success = globalShortcut.register('CommandOrControl+Space', () => {
-    if (win.isVisible()) {
-      win.webContents.send('astra:shortcut-activate');
-      win.focus();
-    } else {
-      windowManager?.showAndFocus();
-      win.webContents.send('astra:shortcut-listen');
-    }
-  });
+  try {
+    globalShortcut.register('CommandOrControl+Space', () => {
+      if (win.isVisible()) {
+        win.webContents.send('astra:shortcut-activate');
+        win.focus();
+      } else {
+        windowManager?.showAndFocus();
+        win.webContents.send('astra:shortcut-listen');
+      }
+    });
 
-  if (!success) {
     globalShortcut.register('Alt+Space', () => {
       if (win.isVisible()) {
         win.webContents.send('astra:shortcut-activate');
@@ -144,21 +106,30 @@ function registerGlobalShortcuts(win: BrowserWindow) {
         win.webContents.send('astra:shortcut-listen');
       }
     });
+  } catch (err) {
+    console.warn('[SHORTCUT REGISTRATION WARNING]:', err);
   }
 }
 
 function setupIPC(win: BrowserWindow) {
   ipcMain.on('astra:open', () => {
-    windowManager?.setExpanded(true);
     windowManager?.showAndFocus();
   });
 
   ipcMain.on('astra:minimize', () => {
-    windowManager?.setExpanded(false);
+    win.minimize();
+  });
+
+  ipcMain.on('astra:maximize', () => {
+    if (win.isMaximized()) {
+      win.unmaximize();
+    } else {
+      win.maximize();
+    }
   });
 
   ipcMain.on('astra:close', () => {
-    win.hide();
+    win.close();
   });
 
   ipcMain.on('astra:set-always-on-top', (_e, flag: boolean) => {
@@ -180,8 +151,6 @@ function setupIPC(win: BrowserWindow) {
 }
 
 app.whenReady().then(async () => {
-  await ensureBackendServer();
-
   windowManager = new WindowManager();
   const preloadPath = path.join(__dirname, 'preload.js');
   const win = windowManager.createMainWindow(preloadPath);
@@ -190,14 +159,22 @@ app.whenReady().then(async () => {
   registerGlobalShortcuts(win);
   setupIPC(win);
 
-  // Load URL or dist/index.html
+  // Load Frontend:
+  // In development: load Vite dev server URL (e.g. http://localhost:3000 or http://localhost:5173)
+  // In production: load local dist/index.html directly without needing localhost or node
+  const devUrl = process.env.VITE_DEV_SERVER_URL;
   const distIndex = path.resolve(__dirname, '../dist/index.html');
-  if (process.env.VITE_DEV_SERVER_URL) {
-    await win.loadURL(process.env.VITE_DEV_SERVER_URL);
+
+  if (devUrl) {
+    console.log('[ELECTRON]: Loading development server URL:', devUrl);
+    await win.loadURL(devUrl);
   } else if (fs.existsSync(distIndex)) {
+    console.log('[ELECTRON]: Loading local production bundle:', distIndex);
     await win.loadFile(distIndex);
   } else {
-    await win.loadURL(`http://localhost:${PORT}`);
+    // Fallback attempt to standard Vite dev port
+    console.log('[ELECTRON]: Fallback to local dev port...');
+    await win.loadURL('http://localhost:3000').catch(() => win.loadURL('http://localhost:5173'));
   }
 
   win.show();
@@ -217,7 +194,7 @@ app.on('will-quit', () => {
 });
 
 app.on('window-all-closed', () => {
-  if (app.isQuitting) {
+  if (process.platform !== 'darwin' || app.isQuitting) {
     app.quit();
   }
 });
