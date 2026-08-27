@@ -10,8 +10,6 @@ export interface WindowState {
   isMaximized?: boolean;
 }
 
-const CONFIG_FILE = path.join(app.getPath('userData'), 'window-state.json');
-
 export class WindowManager {
   private mainWindow: BrowserWindow | null = null;
   private state: WindowState = {
@@ -24,10 +22,19 @@ export class WindowManager {
     this.loadState();
   }
 
+  private getConfigFile(): string {
+    try {
+      return path.join(app.getPath('userData'), 'window-state.json');
+    } catch {
+      return path.join(process.cwd(), 'window-state.json');
+    }
+  }
+
   private loadState() {
     try {
-      if (fs.existsSync(CONFIG_FILE)) {
-        const raw = fs.readFileSync(CONFIG_FILE, 'utf8');
+      const configFile = this.getConfigFile();
+      if (fs.existsSync(configFile)) {
+        const raw = fs.readFileSync(configFile, 'utf8');
         this.state = { ...this.state, ...JSON.parse(raw) };
       }
     } catch {
@@ -48,7 +55,7 @@ export class WindowManager {
           this.state.height = bounds.height;
         }
       }
-      fs.writeFileSync(CONFIG_FILE, JSON.stringify(this.state, null, 2), 'utf8');
+      fs.writeFileSync(this.getConfigFile(), JSON.stringify(this.state, null, 2), 'utf8');
     } catch {
       // Ignore
     }
