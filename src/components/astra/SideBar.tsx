@@ -8,8 +8,7 @@ import {
   Folder,
   Settings,
   Cpu,
-  Shield,
-  Layers
+  Shield
 } from 'lucide-react';
 
 export type SidebarTab =
@@ -21,7 +20,6 @@ export type SidebarTab =
   | 'files'
   | 'robotics'
   | 'security'
-  | 'apis'
   | 'settings';
 
 interface SideBarProps {
@@ -46,7 +44,6 @@ export const SideBar: React.FC<SideBarProps> = ({
     { id: 'files', label: 'File Vault', icon: Folder },
     { id: 'robotics', label: 'Robotics HUD', icon: Cpu },
     { id: 'security', label: 'Security Center', icon: Shield },
-    { id: 'apis', label: 'Public APIs', icon: Layers },
     { id: 'settings', label: 'System Settings', icon: Settings },
   ];
 

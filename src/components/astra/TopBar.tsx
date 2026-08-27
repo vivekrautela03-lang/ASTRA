@@ -28,7 +28,7 @@ export const TopBar: React.FC<TopBarProps> = ({
   const notifications = [
     { id: 1, title: 'Neural Core Synchronized', time: 'Just now' },
     { id: 2, title: 'AR Camera Vision Active', time: '1m ago' },
-    { id: 3, title: 'Public APIs Catalog Loaded (1,400+ endpoints)', time: '5m ago' }
+    { id: 3, title: 'File Vault & Plugins Synchronized', time: '5m ago' }
   ];
 
   return (

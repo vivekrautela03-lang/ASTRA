@@ -23,7 +23,6 @@ import { handleAstraEvent } from '../services/astraEvents';
 import { fileVaultService } from '../services/fileVaultService';
 import { AstraSecurityCenter } from '../components/astra/AstraSecurityCenter';
 import { AstraRoboticsHUD } from '../components/astra/AstraRoboticsHUD';
-import { AstraPublicApisView } from '../components/astra/AstraPublicApisView';
 import { AstraTaskStudio } from '../components/astra/AstraTaskStudio';
 import { AstraSettings } from '../components/astra/AstraSettings';
 import type { AIModelId } from '../types/eva';
@@ -117,13 +116,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
             label: 'Security Center',
             variant: 'primary',
             onClick: () => setActiveTab('security')
-          });
-        }
-        if (lower.includes('api') || lower.includes('catalog') || lower.includes('endpoint')) {
-          actions.push({
-            label: 'Public APIs',
-            variant: 'primary',
-            onClick: () => setActiveTab('apis')
           });
         }
         if (lower.includes('task') || lower.includes('studio') || lower.includes('workflow')) {
@@ -321,10 +313,6 @@ export const Dashboard: React.FC<DashboardProps> = ({ user }) => {
         ) : activeTab === 'security' ? (
           <div className="w-full max-w-4xl h-[70vh] my-auto overflow-y-auto astra-scrollbar animate-in fade-in zoom-in-95">
             <AstraSecurityCenter />
-          </div>
-        ) : activeTab === 'apis' ? (
-          <div className="w-full max-w-4xl h-[70vh] my-auto overflow-y-auto astra-scrollbar animate-in fade-in zoom-in-95">
-            <AstraPublicApisView />
           </div>
         ) : activeTab === 'tasks' ? (
           <div className="w-full max-w-4xl h-[70vh] my-auto overflow-y-auto astra-scrollbar animate-in fade-in zoom-in-95">
