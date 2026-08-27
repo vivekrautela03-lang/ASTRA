@@ -2,13 +2,15 @@ import '../backend/config/env.js';
 import express from 'express';
 import http from 'http';
 import cors from 'cors';
+import { spawn } from 'child_process';
+import path from 'path';
 import systemRoutes from './routes/system.js';
 import automationRoutes from './routes/automation.js';
 import astraCoreRoutes from './routes/astraCore.js';
 import integrationRoutes from './routes/integrations.js';
 import deviceRoutes from './routes/devices.js';
+import pythonToolsRoutes from './routes/pythonTools.js';
 import { setupWebSocket } from './ws/bridge.js';
-
 import { gatewayRouter } from '../backend/core/gateway.js';
 
 const app = express();
@@ -29,14 +31,13 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Legacy backwards-compatible endpoints
+// Mounted Routes
 app.use('/api', systemRoutes);
 app.use('/api', automationRoutes);
 app.use('/api', astraCoreRoutes);
 app.use('/api', integrationRoutes);
 app.use('/api', deviceRoutes);
-
-import path from 'path';
+app.use('/api/tools', pythonToolsRoutes);
 
 // Serve production built UI
 const distPath = path.resolve(process.cwd(), 'dist');
@@ -51,6 +52,7 @@ app.get('/api', (req, res) => {
     endpoints: {
       health: `http://localhost:${PORT}/api/health`,
       status: `http://localhost:${PORT}/api/astra/status`,
+      tools: `http://localhost:${PORT}/api/tools/execute`,
       models: `http://localhost:${PORT}/api/settings/models`,
       integrations: `http://localhost:${PORT}/api/integrations`,
       devices: `http://localhost:${PORT}/api/devices`,
@@ -66,6 +68,22 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(distPath, 'index.html'));
 });
 
+// Ensure Python Bridge is running
+function startPythonBridge() {
+  fetch('http://127.0.0.1:8991/health')
+    .then(() => console.log('🐍 [PYTHON BRIDGE]: Already active on port 8991.'))
+    .catch(() => {
+      console.log('🐍 [PYTHON BRIDGE]: Spawning Python Tool Kernel on port 8991...');
+      const pyProc = spawn('python', ['server/pythonBridge.py', '8991'], {
+        stdio: 'inherit',
+        shell: true
+      });
+      pyProc.on('error', (err) => console.error('[PYTHON BRIDGE SPAWN ERROR]:', err.message));
+    });
+}
+
+startPythonBridge();
+
 const server = http.createServer(app);
 setupWebSocket(server);
 
@@ -73,6 +91,7 @@ server.listen(PORT, () => {
   console.log('\n=================================================');
   console.log(` ⚡ ASTRA AI OPERATING SYSTEM KERNEL v10.0-ULTRA ONLINE`);
   console.log(` 🌐 REST API Gateway:  http://localhost:${PORT}/api/astra/status`);
+  console.log(` 🐍 Python Tools API:  http://localhost:${PORT}/api/tools/execute`);
   console.log(` 🔌 WebSocket Bridge:  ws://localhost:${PORT}/ev-kernel`);
   console.log(` 🛡️  Zero-Trust Sandbox & Permission Interlock: ACTIVE`);
   console.log('=================================================\n');

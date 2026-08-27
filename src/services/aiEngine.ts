@@ -5,6 +5,7 @@ import { memoryEngine } from './memoryEngine';
 import { ragEngine } from './rag/ragEngine';
 import { buildAstraSystemPrompt } from '../config/astraPersonality';
 import { supabaseService } from './supabaseClient';
+import { automationBridge } from './automationBridge';
 
 export interface ModelRecommendation {
   modelId: AIModelId;
@@ -282,10 +283,40 @@ export class AIEngine {
       }
     }
 
+    // 0. Native System Tool Intent Execution via Python Kernel
+    if (lower.startsWith('open ') || lower.startsWith('launch ') || lower.startsWith('start ')) {
+      const appName = prompt.replace(/^(open|launch|start)\s+/i, '').trim();
+      if (appName && !appName.includes('file') && !appName.includes('folder')) {
+        const toolRes = await automationBridge.executeTool('open_app', { app_name: appName });
+        if (toolRes.success && toolRes.result) {
+          fullText = String(toolRes.result);
+        }
+      }
+    } else if (lower.includes('system status') || lower.includes('pc status') || lower.includes('cpu usage') || lower.includes('ram usage') || lower.includes('system monitor')) {
+      const toolRes = await automationBridge.executeTool('system_status', {});
+      if (toolRes.success && toolRes.result) {
+        fullText = `System Telemetry Metrics:\n\n${toolRes.result}`;
+      }
+    } else if (lower.includes('weather') && (lower.includes('in ') || lower.includes('for '))) {
+      const match = prompt.match(/weather\s+(?:in|for|at)\s+([a-zA-Z\s]+)/i);
+      const city = match ? match[1].trim() : 'London';
+      const toolRes = await automationBridge.executeTool('weather_report', { city });
+      if (toolRes.success && toolRes.result) {
+        fullText = String(toolRes.result);
+      }
+    } else if (lower.includes('play ') && lower.includes('youtube')) {
+      const match = prompt.match(/play\s+(.+?)(?:\s+on\s+youtube|\s+youtube|$)/i);
+      const query = match ? match[1].trim() : prompt;
+      const toolRes = await automationBridge.executeTool('youtube_video', { action: 'play', query });
+      if (toolRes.success && toolRes.result) {
+        fullText = String(toolRes.result);
+      }
+    }
+
     // 3. Direct simple greetings
-    if (lower === 'hi' || lower === 'hello' || lower === 'hey' || lower === 'astra' || lower === 'namaste') {
+    if (!fullText && (lower === 'hi' || lower === 'hello' || lower === 'hey' || lower === 'astra' || lower === 'namaste')) {
       fullText = voiceVisionEngine.getGreeting();
-    } else {
+    } else if (!fullText) {
       // Primary Backend Model Router Execution (Layer A Gateway)
       try {
         const backendRes = await fetch('/api/v1/chat', {
